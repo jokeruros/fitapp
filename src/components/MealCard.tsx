@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Meal, Food } from '../storage/models'
 import { calculateFoodForGrams } from '../storage/meals'
 import { getFoods } from '../storage/foods'
+import { useRef } from 'react'
 
 export function MealCard({
   meal,
@@ -16,6 +17,24 @@ export function MealCard({
   const [addingFood, setAddingFood] = useState(false)
   const [allFoods, setAllFoods] = useState<Food[]>([])
   const [search, setSearch] = useState('')
+
+  const touchStartX = useRef(0)
+const touchEndX = useRef(0)
+
+function onTouchStart(e: React.TouchEvent) {
+  touchStartX.current = e.touches[0].clientX
+}
+
+function onTouchMove(e: React.TouchEvent) {
+  touchEndX.current = e.touches[0].clientX
+}
+
+function onTouchEnd() {
+  const dx = touchEndX.current - touchStartX.current
+
+  if (dx > 80) inc()        // swipe right
+  if (dx < -80) removeMeal() // swipe left
+}
 
   useEffect(() => {
     if (addingFood) {
@@ -105,7 +124,19 @@ export function MealCard({
   }
 
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: '#f3f4f6' }}>
+   <div
+  onTouchStart={onTouchStart}
+  onTouchMove={onTouchMove}
+  onTouchEnd={onTouchEnd}
+  style={{
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    background: '#f3f4f6',
+    touchAction: 'pan-y'
+  }}
+>
+
       {/* HEADER */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {editingName ? (
@@ -119,16 +150,19 @@ export function MealCard({
           </>
         ) : (
           <strong onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer' }}>
-            {meal.name}
+           <div style={{ flex: 1 }}>
+  <strong>{meal.name}</strong>
+  <div style={{ fontSize: 12, marginBottom: 6, color: '#374151' }}>
+  Cal {totals.calories.toFixed(0)} ·
+  P {totals.protein.toFixed(1)} ·
+  C {totals.carbs.toFixed(1)} ·
+  F {totals.fats.toFixed(1)}
+</div>
+</div>
           </strong>
         )}
 
-        <span>
-          Cal {totals.calories.toFixed(0)} |
-          P {totals.protein.toFixed(1)} |
-          C {totals.carbs.toFixed(1)} |
-          F {totals.fats.toFixed(1)}
-        </span>
+  
 
         <button onClick={inc}>+</button>
         <button onClick={dec}>-</button>
