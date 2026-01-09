@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { Meal, Food } from '../storage/models'
 import { calculateFoodForGrams } from '../storage/meals'
 import { getFoods } from '../storage/foods'
-import { useRef } from 'react'
 
 export function MealCard({
   meal,
@@ -17,24 +16,6 @@ export function MealCard({
   const [addingFood, setAddingFood] = useState(false)
   const [allFoods, setAllFoods] = useState<Food[]>([])
   const [search, setSearch] = useState('')
-
-  const touchStartX = useRef(0)
-const touchEndX = useRef(0)
-
-function onTouchStart(e: React.TouchEvent) {
-  touchStartX.current = e.touches[0].clientX
-}
-
-function onTouchMove(e: React.TouchEvent) {
-  touchEndX.current = e.touches[0].clientX
-}
-
-function onTouchEnd() {
-  const dx = touchEndX.current - touchStartX.current
-
-  if (dx > 80) inc()        // swipe right
-  if (dx < -80) removeMeal() // swipe left
-}
 
   useEffect(() => {
     if (addingFood) {
@@ -124,19 +105,7 @@ function onTouchEnd() {
   }
 
   return (
-   <div
-  onTouchStart={onTouchStart}
-  onTouchMove={onTouchMove}
-  onTouchEnd={onTouchEnd}
-  style={{
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 12,
-    background: '#f3f4f6',
-    touchAction: 'pan-y'
-  }}
->
-
+    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: '#f3f4f6' }}>
       {/* HEADER */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {editingName ? (
