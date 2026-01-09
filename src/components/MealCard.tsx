@@ -105,7 +105,7 @@ export function MealCard({
   }
 
   return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: '#f3f4f6' }}>
+    <div className="meal-card" style={{ marginTop: 12, padding: 12, borderRadius: 12, background: '#f3f4f6' }}>
       {/* HEADER */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {editingName ? (
@@ -124,10 +124,10 @@ export function MealCard({
     alignItems: 'center'
   }}>
            <div style={{ flex: 1 }}>
-  <div
+<div
   style={{
-    flex: '0 0 50%',
-    maxWidth: '50%',
+    flex: 1,
+    minWidth: 0,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',

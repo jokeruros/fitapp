@@ -13,7 +13,7 @@ export function AddMeal({
   onSave: (meal: Meal) => void
   onClose: () => void
 }) {
-  const [name, setName] = useState('New Meal')
+  const [name, setName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
   const [items, setItems] = useState<Food[]>([])
   const [search, setSearch] = useState('')
