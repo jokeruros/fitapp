@@ -325,12 +325,14 @@ function AddFoodRow({
 />
 
         <span style={{ marginLeft: 4 }}>g</span>
-        <button
-          style={{ marginLeft: 8 }}
-          onClick={() => onAdd(food, grams)}
-        >
-          Add
-        </button>
+<button
+  onClick={() => {
+    onAdd(food, grams)
+    navigator.vibrate?.(40)
+  }}
+>
+  Add
+</button>
       </div>
     </div>
   )

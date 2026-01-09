@@ -8,7 +8,14 @@ export default function App() {
 
   return (
     <>
-      <div style={{ paddingBottom: 90 }}>
+      <div
+  style={{
+    paddingBottom: 80,
+    height: '100vh',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch'
+  }}
+>
         {tab === 'dash' && <Dashboard />}
         {tab === 'foods' && <Foods />}
         {tab === 'goals' && <Goals />}
