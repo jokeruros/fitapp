@@ -78,11 +78,14 @@ export function Dashboard() {
     {/* ADD MEAL */}
     <button
       style={{
-        width: '100%',
-        padding: 12,
-        fontSize: 16,
-        marginBottom: 16
-      }}
+    width: '100%',
+    background: '#1f2937',
+    color: 'white',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    fontWeight: 600
+  }}
       onClick={() => setAdding(v => !v)}
     >
       ➕ Add Meal
