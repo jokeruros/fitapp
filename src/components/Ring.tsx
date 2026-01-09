@@ -9,49 +9,63 @@ export function Ring({
   label: string
   color: string
 }) {
-  const percent = (value / goal) * 100
-  const display = Math.round(percent)
-  const ringFill = Math.min(100, percent)
-  const stroke = 8
-  const r = 42
-  const c = 2 * Math.PI * r
-  const offset = c - (ringFill / 100) * c
-
-  return (
-    <div style={{ width: 100, textAlign: 'center' }}>
-      <svg width="100" height="100">
+  const percent = goal ? Math.round((value / goal) * 100) : 0
+ 
+ return (
+  <div style={{ textAlign: 'center', width: '100%' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '1 / 1'
+      }}
+    >
+      <svg viewBox="0 0 120 120" style={{ width: '100%' }}>
         <circle
-          cx="50"
-          cy="50"
-          r={r}
+          cx="60"
+          cy="60"
+          r="52"
           stroke="#e5e7eb"
-          strokeWidth={stroke}
+          strokeWidth="10"
           fill="none"
         />
+
         <circle
-          cx="50"
-          cy="50"
-          r={r}
+          cx="60"
+          cy="60"
+          r="52"
           stroke={color}
-          strokeWidth={stroke}
+          strokeWidth="10"
           fill="none"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
+          strokeDasharray={`${percent * 3.26} 326`}
           strokeLinecap="round"
-          transform="rotate(-90 50 50)"
+          transform="rotate(-90 60 60)"
         />
       </svg>
-      <div style={{ marginTop: -72, textAlign: 'center' }}>
-  <div style={{ fontWeight: 700, fontSize: 18 }}>
-    {display}%
-  </div>
-  <div style={{ fontSize: 11, color: '#6b7280' }}>
-    {Math.round(value)} / {Math.round(goal)}
-  </div>
-</div>
-      <div style={{ fontSize: 12, color: '#6b7280' }}>
-        {label}
+
+      {/* CENTER TEXT */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 700
+        }}
+      >
+        <div style={{ fontSize: 20 }}>{percent}%</div>
+        <div style={{ fontSize: 12, color: '#6b7280' }}>
+          {value.toFixed(0)} / {goal.toFixed(0)}
+        </div>
       </div>
     </div>
-  )
+
+    {/* LABEL BELOW */}
+    <div style={{ marginTop: 6, fontSize: 14, color: '#374151' }}>
+      {label}
+    </div>
+  </div>
+)
 }

@@ -68,12 +68,41 @@ export function Dashboard() {
       )}
 
       <div className="card">
-<div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 16 }}>
-  <Ring label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb" />
-  <Ring label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
-  <Ring label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
-  <Ring label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 12,
+    marginTop: 12,
+    marginBottom: 16
+  }}
+>
+  <Ring
+    label="Calories"
+    value={totals.calories}
+    goal={calorieGoal}
+    color="#2563eb"
+  />
+  <Ring
+    label="Protein"
+    value={totals.protein}
+    goal={goals.protein}
+    color="#16a34a"
+  />
+  <Ring
+    label="Carbs"
+    value={totals.carbs}
+    goal={goals.carbs}
+    color="#ca8a04"
+  />
+  <Ring
+    label="Fats"
+    value={totals.fats}
+    goal={goals.fats}
+    color="#dc2626"
+  />
 </div>
+
       </div>
 
       <div style={{ marginTop: 16 }}>
