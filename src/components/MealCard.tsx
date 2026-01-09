@@ -171,13 +171,36 @@ function FoodRow({ food, onChange, onRemove }: { food: Food; onChange: (g: numbe
   const [grams, setGrams] = useState(food.grams)
 
   return (
-    <div style={{ background: '#f9fafb', padding: 10, borderRadius: 10, marginBottom: 8 }}>
+    <div style={{ background: '#f9fafb', padding: 10, borderRadius:8, marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <strong style={{ flex: 1 }}>{food.name}</strong>
-        <input type="number" value={grams} onChange={e => setGrams(+e.target.value)} style={{ width: 72 }} />
-        g
-        <button onClick={() => onChange(grams)}>Save</button>
-        <button onClick={onRemove}>✕</button>
+  <input
+  type="number"
+  value={grams}
+  inputMode="numeric"
+  onChange={e => setGrams(Number(e.target.value))}
+  onBlur={() => onChange(grams)}
+  style={{
+    width: 72,
+    textAlign: 'center',
+    fontVariantNumeric: 'tabular-nums',
+    borderRadius: 8,
+    border: '1px solid #334155',
+    padding: '6px 8px',
+    background: '#020617',
+    color: 'white'
+  }}
+/>
+
+        <button onClick={onRemove}   style={{
+    height: 35,
+    width: 35,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    lineHeight: 1
+  }}>✕</button>
       </div>
       <div style={{ fontSize: 12, marginTop: 4 }}>
         Cal {food.calories.toFixed(0)} · P {food.protein.toFixed(1)} · C {food.carbs.toFixed(1)} · F {food.fats.toFixed(1)}
