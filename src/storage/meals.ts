@@ -1,4 +1,4 @@
-import type { Food, Meal } from './models'
+import type { Food } from './models'
 
 export function calculateFoodForGrams(food: Food, grams: number): Food {
   const factor = grams / food.grams

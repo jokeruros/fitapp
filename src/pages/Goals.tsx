@@ -41,7 +41,8 @@ export function GoalsPage() {
     saveGoals({
       protein: goals.protein,
       carbs: goals.carbs,
-      fats: goals.fats
+      fats: goals.fats,
+      calories: 0
     })
     setDirty(false)
   }
