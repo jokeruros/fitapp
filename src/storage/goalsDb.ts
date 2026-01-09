@@ -1,26 +1,21 @@
-import { dbPromise } from './db'
+import { load, save } from './userData'
 
 export interface Goals {
-  calories: number
   protein: number
   carbs: number
   fats: number
+  calories: number
 }
 
-const DEFAULT_GOALS: Goals = {
-  calories: 2500,
-  protein: 150,
-  carbs: 300,
-  fats: 70
+export function getGoals() {
+  return load<Goals>('goals', {
+    protein: 0,
+    carbs: 0,
+    fats: 0,
+    calories: 0
+  })
 }
 
-export async function getGoals(): Promise<Goals> {
-  const db = await dbPromise
-  const g = await db.get('settings', 'goals')
-  return g ?? DEFAULT_GOALS
-}
-
-export async function saveGoals(goals: Goals) {
-  const db = await dbPromise
-  await db.put('settings', goals, 'goals')
+export function saveGoals(goals: Goals) {
+  return save('goals', goals)
 }

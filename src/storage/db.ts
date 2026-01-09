@@ -1,15 +1,12 @@
 import { openDB } from 'idb'
 
-export const dbPromise = openDB('fitness-db', 2, {
+export const dbPromise = openDB('fitness-db', 3, {
   upgrade(db) {
-    if (!db.objectStoreNames.contains('foods')) {
-      db.createObjectStore('foods', { keyPath: 'id' })
+    if (!db.objectStoreNames.contains('users')) {
+      db.createObjectStore('users', { keyPath: 'email' })
     }
-    if (!db.objectStoreNames.contains('meals')) {
-      db.createObjectStore('meals', { keyPath: 'id' })
-    }
-    if (!db.objectStoreNames.contains('settings')) {
-      db.createObjectStore('settings')
+    if (!db.objectStoreNames.contains('data')) {
+      db.createObjectStore('data')
     }
   }
 })
