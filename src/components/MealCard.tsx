@@ -115,7 +115,8 @@ export function MealCard({
                   textOverflow: 'ellipsis'
                 }}
               >
-                {meal.name || 'Meal'}
+                {meal.name || 'Meal'}{meal.eaten ? ` (x${meal.eaten})` : ''}
+                
               </div>
             )}
           </div>
