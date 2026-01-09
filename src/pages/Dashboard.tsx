@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { Meal } from '../storage/models'
 import { MealCard } from '../components/MealCard'
-import { ProgressBar } from '../components/ProgressBar'
 import { AddMeal } from '../components/AddMeal'
 import { getMeals, saveMeals } from '../storage/mealsDb'
 import { getGoals, type Goals } from '../storage/goalsDb'
+import { Ring } from '../components/Ring'
 
 export function Dashboard() {
   const [meals, setMeals] = useState<Meal[]>([])
@@ -68,10 +68,12 @@ export function Dashboard() {
       )}
 
       <div className="card">
-        <ProgressBar label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb" />
-        <ProgressBar label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
-        <ProgressBar label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
-        <ProgressBar label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
+<div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 16 }}>
+  <Ring label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb" />
+  <Ring label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
+  <Ring label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
+  <Ring label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
+</div>
       </div>
 
       <div style={{ marginTop: 16 }}>
