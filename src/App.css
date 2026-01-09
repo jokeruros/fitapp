@@ -40,3 +40,29 @@
 .read-the-docs {
   color: #888;
 }
+/* ---- iOS width lock ---- */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Prevent components from breaking layout */
+* {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Meals & cards must wrap instead of stretching */
+.meal-card, 
+.meal-row,
+.food-row,
+div {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* iOS flexbox fix */
+.flex, [style*="display: flex"] {
+  min-width: 0;
+}

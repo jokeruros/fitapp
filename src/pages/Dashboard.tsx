@@ -51,65 +51,88 @@ export function Dashboard() {
     { calories: 0, protein: 0, carbs: 0, fats: 0 }
   )
 
-  return (
-    <div style={{ padding: 12 }}>
-      <button style={{ width: '100%', marginBottom: 12 }} onClick={() => setAdding(true)}>
-        ➕ Add Meal
-      </button>
+ return (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.4)',
+      zIndex: 50,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-end'
+    }}
+  >
+    <div
+      style={{
+        background: '#fff',
+        width: '100%',
+        maxHeight: '90vh',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        padding: 12,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch'
+      }}
+    >
 
-      {adding && (
-        <AddMeal
-          onSave={meal => {
-            setMeals(m => [...m, meal])
-            setAdding(false)
-          }}
-          onClose={() => setAdding(false)}
-        />
-      )}
-
-      <div className="card">
-<div
-  style={{
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 12,
-    marginTop: 12,
-    marginBottom: 16
-  }}
->
-  <Ring
-    label="Calories"
-    value={totals.calories}
-    goal={calorieGoal}
-    color="#2563eb"
-  />
-  <Ring
-    label="Protein"
-    value={totals.protein}
-    goal={goals.protein}
-    color="#16a34a"
-  />
-  <Ring
-    label="Carbs"
-    value={totals.carbs}
-    goal={goals.carbs}
-    color="#ca8a04"
-  />
-  <Ring
-    label="Fats"
-    value={totals.fats}
-    goal={goals.fats}
-    color="#dc2626"
-  />
-</div>
-
-      </div>
-
-      <div style={{ marginTop: 16 }}>
-        {meals.map(meal => (
-          <MealCard key={meal.id} meal={meal} update={setMeals} />
-        ))}
+    {/* ===== PROGRESS RINGS ===== */}
+    <div style={{ padding: 12, flexShrink: 0 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 12
+        }}
+      >
+        <Ring label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb" />
+        <Ring label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
+        <Ring label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
+        <Ring label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
       </div>
     </div>
-  )
+
+    {/* ===== ADD MEAL BUTTON ===== */}
+    <div
+      style={{
+        padding: 12,
+        borderBottom: '1px solid #e5e7eb',
+        flexShrink: 0
+      }}
+    >
+      <button
+        style={{ width: '100%', padding: 12, fontSize: 16 }}
+        onClick={() => setAdding(true)}
+      >
+        ➕ Add Meal
+      </button>
+    </div>
+
+    {/* ===== MEALS LIST ===== */}
+    <div
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: 12,
+        WebkitOverflowScrolling: 'touch'
+      }}
+    >
+      {meals.map(meal => (
+        <MealCard key={meal.id} meal={meal} update={setMeals} />
+      ))}
+    </div>
+
+    {/* ===== ADD MEAL MODAL ===== */}
+    {adding && (
+      <AddMeal
+        onSave={meal => {
+          setMeals(m => [...m, meal])
+          setAdding(false)
+        }}
+        onClose={() => setAdding(false)}
+      />
+    )}
+  </div>
+  </div>
+)
 }
