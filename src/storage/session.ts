@@ -9,8 +9,10 @@ export function getCurrentUser(): User | null {
 
 export function setCurrentUser(user: User) {
   localStorage.setItem('currentUser', JSON.stringify(user))
+  window.dispatchEvent(new Event('auth-changed'))
 }
 
 export function logout() {
   localStorage.removeItem('currentUser')
+  window.dispatchEvent(new Event('auth-changed'))
 }

@@ -13,9 +13,42 @@ export default function App() {
 
   return (
     <>
-      <div style={{ paddingBottom: 80 }}>
-        <button onClick={() => { logout(); setUser(null) }}>Logout</button>
+      {/* TOP BAR */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 52,
+          background: '#0f172a',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 12px',
+          zIndex: 50
+        }}
+      >
+        <div style={{ fontWeight: 700 }}>Fit Tracker</div>
 
+        <button
+          onClick={logout}
+          style={{
+            marginLeft: 'auto',
+            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.3)',
+            color: 'white',
+            padding: '6px 10px',
+            borderRadius: 8
+          }}
+        >
+          Log out
+        </button>
+      </div>
+
+      
+
+      <div style={{ paddingTop: 52, paddingBottom: 80 }}>
         {tab === 'dash' && <Dashboard />}
         {tab === 'foods' && <Foods />}
         {tab === 'goals' && <Goals />}
