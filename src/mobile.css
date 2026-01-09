@@ -1,3 +1,4 @@
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -5,11 +6,14 @@
 
 body {
   margin: 0;
-  background: #f3f4f6;
+  min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro", system-ui, sans-serif;
+
+  background: url("back_pic.png") no-repeat center center fixed;
+  background-size: cover;
+
   color: #111;
 }
-
 button {
   background: #2563eb;
   color: white;
