@@ -121,12 +121,21 @@ export function MealCard({
           <strong onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer' }}>
            <div style={{ flex: 1 }}>
   <strong>{meal.name}</strong>
-  <div style={{ fontSize: 12, marginBottom: 6, color: '#374151' }}>
+  <div
+  style={{
+    fontSize: 12,
+    color: '#374151',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  }}
+>
   Cal {totals.calories.toFixed(0)} ·
   P {totals.protein.toFixed(1)} ·
   C {totals.carbs.toFixed(1)} ·
   F {totals.fats.toFixed(1)}
 </div>
+
 </div>
           </strong>
         )}
@@ -196,26 +205,62 @@ function FoodRow({
   onChange: (grams: number) => void
   onRemove: () => void
 }) {
-  const [grams, setGrams] = useState(food.grams)
+  const [grams, setGrams] = useState<number>(food.grams)
 
   return (
-    <div style={{ display: 'flex', gap: 6, fontSize: 12, marginBottom: 4 }}>
-      <strong style={{ width: 100 }}>{food.name}</strong>
-      <input
-        type="number"
-        value={grams}
-        onChange={e => setGrams(+e.target.value)}
-        style={{ width: 60 }}
-      />
-      g
-      <span>
-        Cal {food.calories.toFixed(0)} |
-        P {food.protein.toFixed(1)} |
-        C {food.carbs.toFixed(1)} |
+    <div
+      style={{
+        background: '#f9fafb',
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 8
+      }}
+    >
+      {/* ROW 1 — name + grams + actions */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}
+      >
+        <strong style={{ flex: 1 }}>{food.name}</strong>
+
+        <input
+          type="number"
+          value={grams}
+          onChange={e => setGrams(Number(e.target.value))}
+          inputMode="numeric"
+          style={{
+            width: 72,
+            textAlign: 'center',
+            fontVariantNumeric: 'tabular-nums',
+            borderRadius: 8,
+            border: '1px solid #d1d5db',
+            padding: '6px 4px'
+          }}
+        />
+
+        <span>g</span>
+
+        <button onClick={() => onChange(grams)}>Save</button>
+        <button onClick={onRemove}>✕</button>
+      </div>
+
+      {/* ROW 2 — nutrition */}
+      <div
+        style={{
+          fontSize: 12,
+          marginTop: 4,
+          color: '#4b5563',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        Cal {food.calories.toFixed(0)} ·
+        P {food.protein.toFixed(1)} ·
+        C {food.carbs.toFixed(1)} ·
         F {food.fats.toFixed(1)}
-      </span>
-      <button onClick={() => onChange(grams)}>Save</button>
-      <button onClick={onRemove}>✕</button>
+      </div>
     </div>
   )
 }
@@ -227,7 +272,7 @@ function AddFoodRow({
   food: Food
   onAdd: (food: Food, grams: number) => void
 }) {
-  const [grams, setGrams] = useState(food.grams)
+  const [grams, setGrams] = useState<number>(100)
 
   return (
     <div
@@ -262,12 +307,23 @@ function AddFoodRow({
       </div>
 
       <div style={{ marginTop: 4 }}>
-        <input
-          type="number"
-          value={grams}
-          onChange={e => setGrams(+e.target.value)}
-          style={{ width: 70 }}
-        />
+       <input
+  type="number"
+  value={grams}
+ onChange={e => setGrams(Number(e.target.value))}
+ inputMode="numeric"
+  style={{
+    width: 72,
+    minWidth: 72,
+    textAlign: 'center',
+    fontVariantNumeric: 'tabular-nums',
+    fontFamily: 'system-ui, monospace',
+    padding: '6px 8px',
+    borderRadius: 8,
+    border: '1px solid #d1d5db'
+  }}
+/>
+
         <span style={{ marginLeft: 4 }}>g</span>
         <button
           style={{ marginLeft: 8 }}
