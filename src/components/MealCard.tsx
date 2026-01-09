@@ -118,9 +118,24 @@ export function MealCard({
             <button onClick={saveName}>Save</button>
           </>
         ) : (
-          <strong onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer' }}>
+          <strong onClick={() => setOpen(o => !o)}  style={{
+    display: 'flex',
+    width: '100%',
+    alignItems: 'center'
+  }}>
            <div style={{ flex: 1 }}>
-  <strong>{meal.name}</strong>
+  <div
+  style={{
+    flex: '0 0 50%',
+    maxWidth: '50%',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    fontWeight: 600
+  }}
+>
+  {meal.name}
+</div>
   <div
   style={{
     fontSize: 12,
@@ -141,11 +156,20 @@ export function MealCard({
         )}
 
   
+<div
+  style={{
+    flex: '0 0 50%',
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: 6
+  }}
+>
+  <button onClick={e => { e.stopPropagation(); inc() }}>+</button>
+  <button onClick={e => { e.stopPropagation(); dec() }}>-</button>
+  <button onClick={e => { e.stopPropagation(); setEditingName(true) }}>✎</button>
+  <button onClick={e => { e.stopPropagation(); removeMeal() }}>🗑️</button>
+</div>
 
-        <button onClick={inc}>+</button>
-        <button onClick={dec}>-</button>
-        <button onClick={() => setEditingName(true)}>✎</button>
-        <button onClick={removeMeal}>🗑️</button>
       </div>
 
       {/* EXPANDED */}
