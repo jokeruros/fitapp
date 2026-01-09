@@ -12,33 +12,31 @@ export function Dashboard() {
   const [loaded, setLoaded] = useState(false)
 
   const [goals, setGoals] = useState<Goals>({
-  calories: 0,
-  protein: 0,
-  carbs: 0,
-  fats: 0
-})
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fats: 0
+  })
 
-const calorieGoal =
-  goals.protein * 4 +
-  goals.carbs * 4 +
-  goals.fats * 9
+  const calorieGoal =
+    goals.protein * 4 +
+    goals.carbs * 4 +
+    goals.fats * 9
 
-useEffect(() => {
-  getGoals().then(setGoals)
-}, [])
+  useEffect(() => {
+    getGoals().then(setGoals)
+  }, [])
 
-  // LOAD meals on first render
   useEffect(() => {
     getMeals().then(ms => {
-     setMeals(ms)
+      setMeals(ms)
       setLoaded(true)
     })
   }, [])
 
-  // SAVE meals whenever they change
- useEffect(() => {
+  useEffect(() => {
     if (!loaded) return
-      saveMeals(meals)
+    saveMeals(meals)
   }, [meals, loaded])
 
   const totals = meals.reduce(
@@ -54,8 +52,10 @@ useEffect(() => {
   )
 
   return (
-    <div>
-      <button onClick={() => setAdding(true)}>Add Meal</button>
+    <div style={{ padding: 12 }}>
+      <button style={{ width: '100%', marginBottom: 12 }} onClick={() => setAdding(true)}>
+        ➕ Add Meal
+      </button>
 
       {adding && (
         <AddMeal
@@ -67,16 +67,18 @@ useEffect(() => {
         />
       )}
 
-      <hr />
+      <div className="card">
+        <ProgressBar label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb" />
+        <ProgressBar label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
+        <ProgressBar label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
+        <ProgressBar label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
+      </div>
 
-      <ProgressBar label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb"/>
-      <ProgressBar label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
-      <ProgressBar label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
-      <ProgressBar label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
-
-      {meals.map(meal => (
-        <MealCard key={meal.id} meal={meal} update={setMeals} />
-      ))}
+      <div style={{ marginTop: 16 }}>
+        {meals.map(meal => (
+          <MealCard key={meal.id} meal={meal} update={setMeals} />
+        ))}
+      </div>
     </div>
   )
 }

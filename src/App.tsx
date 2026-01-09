@@ -1,26 +1,24 @@
 import { useState } from 'react'
 import { Dashboard } from './pages/Dashboard'
 import { Foods } from './pages/Foods'
-import { GoalsPage } from './pages/Goals'
+import { Goals } from './pages/Goals'
 
 export default function App() {
-  const [tab, setTab] = useState<'dashboard' | 'foods' | 'goals'>('dashboard')
+  const [tab, setTab] = useState<'dash' | 'foods' | 'goals'>('dash')
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 16 }}>
-      <h2>Fitness Tracker</h2>
-
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => setTab('dashboard')}>Dashboard</button>
-        <button onClick={() => setTab('foods')}>Foods</button>
-        <button onClick={() => setTab('goals')}>Goals</button>
+    <>
+      <div style={{ paddingBottom: 90 }}>
+        {tab === 'dash' && <Dashboard />}
+        {tab === 'foods' && <Foods />}
+        {tab === 'goals' && <Goals />}
       </div>
 
-      <hr />
-
-      {tab === 'dashboard' && <Dashboard />}
-      {tab === 'foods' && <Foods />}
-      {tab === 'goals' && <GoalsPage />}
-    </div>
+      <div className="bottom-nav">
+        <button onClick={() => setTab('dash')}>🏠<div>Today</div></button>
+        <button onClick={() => setTab('foods')}>🍎<div>Foods</div></button>
+        <button onClick={() => setTab('goals')}>🎯<div>Goals</div></button>
+      </div>
+    </>
   )
 }

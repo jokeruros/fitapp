@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { getGoals, saveGoals, type Goals } from '../storage/goalsDb'
+import { getGoals, saveGoals, type Goals as GoalsType } from '../storage/goalsDb'
 
-interface EditableGoals extends Goals {
+interface EditableGoals extends GoalsType {
   calories: number
 }
 
-export function GoalsPage() {
+export function Goals() {
   const [goals, setGoals] = useState<EditableGoals>({
     protein: 0,
     carbs: 0,
@@ -31,7 +31,7 @@ export function GoalsPage() {
     }
   }
 
-  function update<K extends keyof Goals>(key: K, value: number) {
+  function update<K extends keyof GoalsType>(key: K, value: number) {
     const updated = recalc({ ...goals, [key]: value })
     setGoals(updated)
     setDirty(true)
@@ -42,7 +42,7 @@ export function GoalsPage() {
       protein: goals.protein,
       carbs: goals.carbs,
       fats: goals.fats,
-      calories: 0
+      calories: goals.calories
     })
     setDirty(false)
   }
@@ -50,7 +50,7 @@ export function GoalsPage() {
   if (!loaded) return null
 
   return (
-    <div>
+    <div style={{ padding: 12 }}>
       <h3>Daily Goals</h3>
 
       <GoalInput
@@ -78,7 +78,7 @@ export function GoalsPage() {
       <button
         onClick={save}
         disabled={!dirty}
-        style={{ marginTop: 12 }}
+        style={{ marginTop: 12, width: '100%' }}
       >
         Save
       </button>
@@ -98,7 +98,7 @@ function GoalInput({
   readOnly?: boolean
 }) {
   return (
-    <div style={{ marginBottom: 8 }}>
+    <div style={{ marginBottom: 12 }}>
       <label style={{ fontSize: 12 }}>{label}</label>
       <input
         type="number"
