@@ -1,20 +1,36 @@
 import { useEffect, useState } from 'react'
-import { getCurrentUser } from './storage/session'
+import { supabase } from './lib/supabase'
 import App from './App'
 import { Auth } from './pages/Auth'
 
 export function AuthGate() {
-  const [user, setUser] = useState(getCurrentUser())
+  const [loading, setLoading] = useState(true)
+  const [session, setSession] = useState<any>(null)
 
   useEffect(() => {
-    const refresh = () => setUser(getCurrentUser())
-    window.addEventListener('auth-changed', refresh)
-    return () => window.removeEventListener('auth-changed', refresh)
+    // Get current session
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session)
+      }
+    )
+
+    return () => {
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
-  if (!user) return <Auth onLogin={function (): void {
-      throw new Error('Function not implemented.')
-  } } />
+  if (loading) return null
+
+  if (!session) {
+    return <Auth onLogin={() => {}} />
+  }
 
   return <App />
 }
