@@ -162,24 +162,53 @@ function FoodEditor({
   onSave: (f: Food) => void
   onCancel: () => void
 }) {
-  const [f, setF] = useState(food)
+  const [name, setName] = useState(food.name)
+  const [grams, setGrams] = useState<string>(String(food.grams ?? ''))
+  const [protein, setProtein] = useState<string>(String(food.protein ?? ''))
+  const [carbs, setCarbs] = useState<string>(String(food.carbs ?? ''))
+  const [fats, setFats] = useState<string>(String(food.fats ?? ''))
 
-  function update<K extends keyof Food>(key: K, value: number | string) {
-    const next = { ...f, [key]: value }
-    next.calories = next.protein * 4 + next.carbs * 4 + next.fats * 9
-    setF(next)
+  const calories =
+    Number(protein || 0) * 4 +
+    Number(carbs || 0) * 4 +
+    Number(fats || 0) * 9
+
+  function save() {
+    onSave({
+      ...food,
+      name,
+      grams: Number(grams || 0),
+      protein: Number(protein || 0),
+      carbs: Number(carbs || 0),
+      fats: Number(fats || 0),
+      calories
+    })
+  }
+
+  function numericSetter(setter: (v: string) => void) {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = e.target.value
+      if (/^\d*$/.test(v)) setter(v)
+    }
   }
 
   return (
-    <div style={{ marginTop: 16, padding: 16, border: '1px solid #e5e7eb', borderRadius: 8 }}>
+    <div
+      style={{
+        marginTop: 16,
+        padding: 16,
+        border: '1px solid #e5e7eb',
+        borderRadius: 8
+      }}
+    >
       <h4>{food.name ? 'Edit Food' : 'Add Food'}</h4>
 
       <div style={{ marginBottom: 8 }}>
         <label>
           Name
           <input
-            value={f.name}
-            onChange={e => update('name', e.target.value)}
+            value={name}
+            onChange={e => setName(e.target.value)}
             style={{ width: '100%' }}
           />
         </label>
@@ -189,46 +218,54 @@ function FoodEditor({
         <label>
           Amount (g)
           <input
-            type="number"
-            value={f.grams}
-            onChange={e => update('grams', +e.target.value)}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={grams}
+            onChange={numericSetter(setGrams)}
           />
         </label>
 
         <label>
           Protein (g)
           <input
-            type="number"
-            value={f.protein}
-            onChange={e => update('protein', +e.target.value)}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={protein}
+            onChange={numericSetter(setProtein)}
           />
         </label>
 
         <label>
           Carbs (g)
           <input
-            type="number"
-            value={f.carbs}
-            onChange={e => update('carbs', +e.target.value)}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={carbs}
+            onChange={numericSetter(setCarbs)}
           />
         </label>
 
         <label>
           Fats (g)
           <input
-            type="number"
-            value={f.fats}
-            onChange={e => update('fats', +e.target.value)}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={fats}
+            onChange={numericSetter(setFats)}
           />
         </label>
       </div>
 
       <div style={{ fontWeight: 500 }}>
-        Calories: {f.calories} kcal
+        Calories: {calories} kcal
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <button onClick={() => onSave(f)}>Save</button>
+        <button onClick={save}>Save</button>
         <button onClick={onCancel} style={{ marginLeft: 8 }}>
           Cancel
         </button>
