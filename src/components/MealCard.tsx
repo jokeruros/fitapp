@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import type { Meal, Food } from '../storage/models'
 import { calculateFoodForGrams } from '../storage/meals'
 import { getFoods } from '../storage/foods'
+import { v4 as uuid } from 'uuid'
+
+type MealFood = Food & { mealItemId: string }
 
 export function MealCard({
   meal,
@@ -22,7 +25,7 @@ export function MealCard({
   }, [addingFood])
 
   const totals = meal.foods.reduce(
-    (acc, f) => {
+    (acc, f: any) => {
       acc.calories += f.calories
       acc.protein += f.protein
       acc.carbs += f.carbs
@@ -34,14 +37,18 @@ export function MealCard({
 
   function inc() {
     update(ms =>
-      ms.map(m => (m.id === meal.id ? { ...m, eaten: m.eaten + 1 } : m))
+      ms.map(m =>
+        m.id === meal.id ? { ...m, eaten: m.eaten + 1 } : m
+      )
     )
   }
 
   function dec() {
     update(ms =>
       ms.map(m =>
-        m.id === meal.id && m.eaten > 0 ? { ...m, eaten: m.eaten - 1 } : m
+        m.id === meal.id && m.eaten > 0
+          ? { ...m, eaten: m.eaten - 1 }
+          : m
       )
     )
   }
@@ -51,20 +58,24 @@ export function MealCard({
   }
 
   function saveName() {
-    update(ms => ms.map(m => (m.id === meal.id ? { ...m, name } : m)))
+    update(ms =>
+      ms.map(m =>
+        m.id === meal.id ? { ...m, name } : m
+      )
+    )
     setEditingName(false)
   }
 
-  function updateFood(food: Food, grams: number) {
+  function updateFood(mealItemId: string, grams: number) {
     update(ms =>
       ms.map(m =>
         m.id !== meal.id
           ? m
           : {
               ...m,
-              foods: m.foods.map(f =>
-                f.id === food.id
-                  ? calculateFoodForGrams(food, grams)
+              foods: m.foods.map((f: any) =>
+                f.mealItemId === mealItemId
+                  ? calculateFoodForGrams(f, grams)
                   : f
               )
             }
@@ -72,24 +83,36 @@ export function MealCard({
     )
   }
 
-  function removeFood(foodId: string) {
+  function removeFood(mealItemId: string) {
     update(ms =>
       ms.map(m =>
         m.id !== meal.id
           ? m
-          : { ...m, foods: m.foods.filter(f => f.id !== foodId) }
+          : {
+              ...m,
+              foods: m.foods.filter(
+                (f: any) => f.mealItemId !== mealItemId
+              )
+            }
       )
     )
   }
 
   function addFood(base: Food, grams: number) {
+    const item = calculateFoodForGrams(base, grams)
+    const withId: MealFood = {
+      ...item,
+      mealItemId: uuid()
+    }
+
     update(ms =>
       ms.map(m =>
         m.id !== meal.id
           ? m
-          : { ...m, foods: [...m.foods, calculateFoodForGrams(base, grams)] }
+          : { ...m, foods: [...m.foods, withId] }
       )
     )
+
     setAddingFood(false)
     setSearch('')
   }
@@ -107,34 +130,24 @@ export function MealCard({
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8 }}>
-          <div style={{ minWidth: 0 }}>
+          <div>
             {editingName ? (
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
                 onBlur={saveName}
                 autoFocus
-                placeholder="Meal name"
                 style={{
                   width: '100%',
                   background: 'transparent',
                   border: 'none',
                   borderBottom: '1px solid #3b82f6',
                   color: 'white',
-                  fontWeight: 600,
-                  fontSize: 16,
-                  outline: 'none'
+                  fontWeight: 600
                 }}
               />
             ) : (
-              <div
-                style={{
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}
-              >
+              <div style={{ fontWeight: 600 }}>
                 {meal.name || 'Meal'}
                 {meal.eaten ? ` (x${meal.eaten})` : ''}
               </div>
@@ -171,12 +184,12 @@ export function MealCard({
       {/* EXPANDED */}
       {open && (
         <div style={{ marginTop: 8 }}>
-          {meal.foods.map(food => (
+          {meal.foods.map((food: any) => (
             <FoodRow
-              key={food.id}
+              key={food.mealItemId}
               food={food}
-              onChange={g => updateFood(food, g)}
-              onRemove={() => removeFood(food.id)}
+              onChange={g => updateFood(food.mealItemId, g)}
+              onRemove={() => removeFood(food.mealItemId)}
             />
           ))}
 
@@ -191,7 +204,9 @@ export function MealCard({
               />
 
               {allFoods
-                .filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
+                .filter(f =>
+                  f.name.toLowerCase().includes(search.toLowerCase())
+                )
                 .slice(0, 5)
                 .map(f => (
                   <AddFoodRow key={f.id} food={f} onAdd={addFood} />
@@ -204,72 +219,43 @@ export function MealCard({
   )
 }
 
-/* -------- FOOD ROWS -------- */
+/* ---------- FOOD ROW ---------- */
 
 function FoodRow({
   food,
   onChange,
   onRemove
 }: {
-  food: Food
+  food: any
   onChange: (g: number) => void
   onRemove: () => void
 }) {
-  const [grams, setGrams] = useState<string>(String(food.grams ?? ''))
+  const [grams, setGrams] = useState(String(food.grams))
+
+  function handleChange(v: string) {
+    if (/^\d*$/.test(v)) setGrams(v)
+  }
 
   return (
-    <div
-      style={{
-        background: '#f9fafb',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 8
-      }}
-    >
+    <div style={{ background: '#f9fafb', padding: 10, borderRadius: 8, marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <strong style={{ flex: 1 }}>{food.name}</strong>
-
+        <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{food.name}</strong>
         <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
           value={grams}
-          onChange={e => {
-            const v = e.target.value
-            if (/^\d*$/.test(v)) setGrams(v)
-          }}
+          inputMode="numeric"
+          onChange={e => handleChange(e.target.value)}
           onBlur={() => onChange(Number(grams || 0))}
-          style={{
-            width: 72,
-            textAlign: 'center',
-            fontVariantNumeric: 'tabular-nums',
-            borderRadius: 8,
-            border: '1px solid #334155',
-            padding: '6px 8px',
-            background: '#020617',
-            color: 'white'
-          }}
+          style={{ width: 72, textAlign: 'center' }}
         />
 
-        <button
-          onClick={onRemove}
-          style={{
-            height: 35,
-            width: 35,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            lineHeight: 1
-          }}
-        >
-          ✕
-        </button>
+        <button onClick={onRemove}>✕</button>
       </div>
 
       <div style={{ fontSize: 12, marginTop: 4 }}>
-        Cal {food.calories.toFixed(0)} · P {food.protein.toFixed(1)} · C{' '}
-        {food.carbs.toFixed(1)} · F {food.fats.toFixed(1)}
+        Cal {food.calories.toFixed(0)} ·
+        P {food.protein.toFixed(1)} ·
+        C {food.carbs.toFixed(1)} ·
+        F {food.fats.toFixed(1)}
       </div>
     </div>
   )
@@ -282,37 +268,21 @@ function AddFoodRow({
   food: Food
   onAdd: (f: Food, g: number) => void
 }) {
-  const [grams, setGrams] = useState<string>('100')
+  const [grams, setGrams] = useState('100')
 
   return (
-    <div
-      style={{
-        background: '#fff',
-        padding: 6,
-        borderRadius: 6,
-        marginBottom: 6
-      }}
-    >
-      <strong style={{ color: food.user ? 'green' : 'black' }}>
-        {food.name}
-      </strong>
-
+    <div style={{ background: '#fff', padding: 6, borderRadius: 6, marginBottom: 6 }}>
+       <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{food.name}</strong>
       <div style={{ fontSize: 12 }}>
         Cal {food.calories} · P {food.protein} · C {food.carbs} · F {food.fats}
       </div>
 
       <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
         value={grams}
-        onChange={e => {
-          const v = e.target.value
-          if (/^\d*$/.test(v)) setGrams(v)
-        }}
+        inputMode="numeric"
+        onChange={e => /^\d*$/.test(e.target.value) && setGrams(e.target.value)}
         style={{ width: 72 }}
-      />{' '}
-      g
+      />
 
       <button onClick={() => onAdd(food, Number(grams || 0))}>
         Add

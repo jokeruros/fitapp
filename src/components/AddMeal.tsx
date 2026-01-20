@@ -4,6 +4,8 @@ import type { Meal, Food } from '../storage/models'
 import { getFoods } from '../storage/foods'
 import { calculateFoodForGrams } from '../storage/meals'
 
+type MealFood = Food & { mealItemId: string }
+
 const PAGE_SIZE = 3
 
 export function AddMeal({
@@ -15,7 +17,7 @@ export function AddMeal({
 }) {
   const [name, setName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
-  const [items, setItems] = useState<Food[]>([])
+  const [items, setItems] = useState<MealFood[]>([])
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [justAdded, setJustAdded] = useState<string | null>(null)
@@ -47,12 +49,22 @@ export function AddMeal({
   )
 
   function addFood(base: Food, grams: number) {
-    const item = calculateFoodForGrams(base, grams)
-    setItems(i => [...i, item])
+    const calculated = calculateFoodForGrams(base, grams)
 
+    const withId: MealFood = {
+      ...calculated,
+      mealItemId: uuid()
+    }
+
+    setItems(i => [...i, withId])
     setJustAdded(base.id)
     navigator.vibrate?.(40)
+
     setTimeout(() => setJustAdded(null), 600)
+  }
+
+  function removeFood(mealItemId: string) {
+    setItems(i => i.filter(f => f.mealItemId !== mealItemId))
   }
 
   function save() {
@@ -84,6 +96,7 @@ export function AddMeal({
         style={{ width: '100%', marginBottom: 8 }}
       />
 
+      {/* FOOD PICK LIST */}
       {paged.map(f => (
         <FoodPickRow
           key={f.id}
@@ -93,7 +106,14 @@ export function AddMeal({
         />
       ))}
 
-      <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+      {/* PAGING */}
+      <div
+        style={{
+          marginTop: 8,
+          display: 'flex',
+          justifyContent: 'space-between'
+        }}
+      >
         <button
           disabled={page === 0}
           onClick={() => setPage(p => Math.max(0, p - 1))}
@@ -113,6 +133,33 @@ export function AddMeal({
         </button>
       </div>
 
+      {/* SELECTED FOODS */}
+      {items.length > 0 && (
+        <>
+          <hr />
+          {items.map(item => (
+            <div
+              key={item.mealItemId}
+              style={{
+                fontSize: 12,
+                padding: 6,
+                borderRadius: 6,
+                background: '#f9fafb',
+                marginBottom: 6,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span>
+                {item.name} — {item.grams}g
+              </span>
+              <button onClick={() => removeFood(item.mealItemId)}>✕</button>
+            </div>
+          ))}
+        </>
+      )}
+
       <hr />
 
       <button onClick={save} style={{ marginTop: 8 }}>
@@ -126,7 +173,7 @@ export function AddMeal({
   )
 }
 
-/* ---------- ROW ---------- */
+/* ---------- FOOD PICK ROW ---------- */
 
 function FoodPickRow({
   food,
@@ -137,7 +184,7 @@ function FoodPickRow({
   onAdd: (food: Food, grams: number) => void
   active: boolean
 }) {
-  const [grams, setGrams] = useState<string>(String(food.grams ?? ''))
+  const [grams, setGrams] = useState('100')
 
   return (
     <div
@@ -161,23 +208,13 @@ function FoodPickRow({
 
       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
         <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
           value={grams}
-          onChange={e => {
-            const v = e.target.value
-            if (/^\d*$/.test(v)) setGrams(v)
-          }}
+          inputMode="numeric"
+          onChange={e => /^\d*$/.test(e.target.value) && setGrams(e.target.value)}
           style={{ width: 70 }}
         />
 
-        <button
-          onClick={() => {
-            const g = Number(grams)
-            if (g > 0) onAdd(food, g)
-          }}
-        >
+        <button onClick={() => onAdd(food, Number(grams || 0))}>
           Add
         </button>
       </div>
