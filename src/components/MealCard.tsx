@@ -33,7 +33,9 @@ export function MealCard({
   )
 
   function inc() {
-    update(ms => ms.map(m => (m.id === meal.id ? { ...m, eaten: m.eaten + 1 } : m)))
+    update(ms =>
+      ms.map(m => (m.id === meal.id ? { ...m, eaten: m.eaten + 1 } : m))
+    )
   }
 
   function dec() {
@@ -58,21 +60,34 @@ export function MealCard({
       ms.map(m =>
         m.id !== meal.id
           ? m
-          : { ...m, foods: m.foods.map(f => (f.id === food.id ? calculateFoodForGrams(food, grams) : f)) }
+          : {
+              ...m,
+              foods: m.foods.map(f =>
+                f.id === food.id
+                  ? calculateFoodForGrams(food, grams)
+                  : f
+              )
+            }
       )
     )
   }
 
   function removeFood(foodId: string) {
     update(ms =>
-      ms.map(m => (m.id !== meal.id ? m : { ...m, foods: m.foods.filter(f => f.id !== foodId) }))
+      ms.map(m =>
+        m.id !== meal.id
+          ? m
+          : { ...m, foods: m.foods.filter(f => f.id !== foodId) }
+      )
     )
   }
 
   function addFood(base: Food, grams: number) {
     update(ms =>
       ms.map(m =>
-        m.id !== meal.id ? m : { ...m, foods: [...m.foods, calculateFoodForGrams(base, grams)] }
+        m.id !== meal.id
+          ? m
+          : { ...m, foods: [...m.foods, calculateFoodForGrams(base, grams)] }
       )
     )
     setAddingFood(false)
@@ -84,7 +99,12 @@ export function MealCard({
       {/* HEADER */}
       <div
         onClick={() => setOpen(o => !o)}
-        style={{ background: '#1f2937', borderRadius: 12, padding: 10, color: 'white' }}
+        style={{
+          background: '#1f2937',
+          borderRadius: 12,
+          padding: 10,
+          color: 'white'
+        }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8 }}>
           <div style={{ minWidth: 0 }}>
@@ -115,8 +135,8 @@ export function MealCard({
                   textOverflow: 'ellipsis'
                 }}
               >
-                {meal.name || 'Meal'}{meal.eaten ? ` (x${meal.eaten})` : ''}
-                
+                {meal.name || 'Meal'}
+                {meal.eaten ? ` (x${meal.eaten})` : ''}
               </div>
             )}
           </div>
@@ -132,7 +152,15 @@ export function MealCard({
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginTop: 6, color: '#9ca3af' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: 12,
+            marginTop: 6,
+            color: '#9ca3af'
+          }}
+        >
           <span>Cal {totals.calories.toFixed(0)}</span>
           <span>P {totals.protein.toFixed(1)}</span>
           <span>C {totals.carbs.toFixed(1)}</span>
@@ -144,14 +172,24 @@ export function MealCard({
       {open && (
         <div style={{ marginTop: 8 }}>
           {meal.foods.map(food => (
-            <FoodRow key={food.id} food={food} onChange={g => updateFood(food, g)} onRemove={() => removeFood(food.id)} />
+            <FoodRow
+              key={food.id}
+              food={food}
+              onChange={g => updateFood(food, g)}
+              onRemove={() => removeFood(food.id)}
+            />
           ))}
 
           <button onClick={() => setAddingFood(a => !a)}>➕ Add Food</button>
 
           {addingFood && (
             <div style={{ marginTop: 8 }}>
-              <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
+              <input
+                placeholder="Search food..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+
               {allFoods
                 .filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
                 .slice(0, 5)
@@ -168,59 +206,117 @@ export function MealCard({
 
 /* -------- FOOD ROWS -------- */
 
-function FoodRow({ food, onChange, onRemove }: { food: Food; onChange: (g: number) => void; onRemove: () => void }) {
-  const [grams, setGrams] = useState(food.grams)
+function FoodRow({
+  food,
+  onChange,
+  onRemove
+}: {
+  food: Food
+  onChange: (g: number) => void
+  onRemove: () => void
+}) {
+  const [grams, setGrams] = useState<string>(String(food.grams ?? ''))
 
   return (
-    <div style={{ background: '#f9fafb', padding: 10, borderRadius:8, marginBottom: 8 }}>
+    <div
+      style={{
+        background: '#f9fafb',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 8
+      }}
+    >
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <strong style={{ flex: 1 }}>{food.name}</strong>
-  <input
-  type="number"
-  value={grams}
-  inputMode="numeric"
-  onChange={e => setGrams(Number(e.target.value))}
-  onBlur={() => onChange(grams)}
-  style={{
-    width: 72,
-    textAlign: 'center',
-    fontVariantNumeric: 'tabular-nums',
-    borderRadius: 8,
-    border: '1px solid #334155',
-    padding: '6px 8px',
-    background: '#020617',
-    color: 'white'
-  }}
-/>
 
-        <button onClick={onRemove}   style={{
-    height: 35,
-    width: 35,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 0,
-    lineHeight: 1
-  }}>✕</button>
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={grams}
+          onChange={e => {
+            const v = e.target.value
+            if (/^\d*$/.test(v)) setGrams(v)
+          }}
+          onBlur={() => onChange(Number(grams || 0))}
+          style={{
+            width: 72,
+            textAlign: 'center',
+            fontVariantNumeric: 'tabular-nums',
+            borderRadius: 8,
+            border: '1px solid #334155',
+            padding: '6px 8px',
+            background: '#020617',
+            color: 'white'
+          }}
+        />
+
+        <button
+          onClick={onRemove}
+          style={{
+            height: 35,
+            width: 35,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            lineHeight: 1
+          }}
+        >
+          ✕
+        </button>
       </div>
+
       <div style={{ fontSize: 12, marginTop: 4 }}>
-        Cal {food.calories.toFixed(0)} · P {food.protein.toFixed(1)} · C {food.carbs.toFixed(1)} · F {food.fats.toFixed(1)}
+        Cal {food.calories.toFixed(0)} · P {food.protein.toFixed(1)} · C{' '}
+        {food.carbs.toFixed(1)} · F {food.fats.toFixed(1)}
       </div>
     </div>
   )
 }
 
-function AddFoodRow({ food, onAdd }: { food: Food; onAdd: (f: Food, g: number) => void }) {
-  const [grams, setGrams] = useState(100)
+function AddFoodRow({
+  food,
+  onAdd
+}: {
+  food: Food
+  onAdd: (f: Food, g: number) => void
+}) {
+  const [grams, setGrams] = useState<string>('100')
 
   return (
-    <div style={{ background: '#fff', padding: 6, borderRadius: 6, marginBottom: 6 }}>
-      <strong style={{ color: food.user ? 'green' : 'black' }}>{food.name}</strong>
+    <div
+      style={{
+        background: '#fff',
+        padding: 6,
+        borderRadius: 6,
+        marginBottom: 6
+      }}
+    >
+      <strong style={{ color: food.user ? 'green' : 'black' }}>
+        {food.name}
+      </strong>
+
       <div style={{ fontSize: 12 }}>
         Cal {food.calories} · P {food.protein} · C {food.carbs} · F {food.fats}
       </div>
-      <input type="number" value={grams} onChange={e => setGrams(+e.target.value)} style={{ width: 72 }} /> g
-      <button onClick={() => onAdd(food, grams)}>Add</button>
+
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={grams}
+        onChange={e => {
+          const v = e.target.value
+          if (/^\d*$/.test(v)) setGrams(v)
+        }}
+        style={{ width: 72 }}
+      />{' '}
+      g
+
+      <button onClick={() => onAdd(food, Number(grams || 0))}>
+        Add
+      </button>
     </div>
   )
 }

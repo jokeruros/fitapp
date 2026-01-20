@@ -24,7 +24,6 @@ export function AddMeal({
     getFoods().then(setFoods)
   }, [])
 
-  // reset paging on search change
   useEffect(() => {
     setPage(0)
   }, [search])
@@ -85,7 +84,6 @@ export function AddMeal({
         style={{ width: '100%', marginBottom: 8 }}
       />
 
-      {/* FOOD LIST */}
       {paged.map(f => (
         <FoodPickRow
           key={f.id}
@@ -95,7 +93,6 @@ export function AddMeal({
         />
       ))}
 
-      {/* PAGING */}
       <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
         <button
           disabled={page === 0}
@@ -140,7 +137,7 @@ function FoodPickRow({
   onAdd: (food: Food, grams: number) => void
   active: boolean
 }) {
-  const [grams, setGrams] = useState(food.grams)
+  const [grams, setGrams] = useState<string>(String(food.grams ?? ''))
 
   return (
     <div
@@ -164,13 +161,23 @@ function FoodPickRow({
 
       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={grams}
-          onChange={e => setGrams(+e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            if (/^\d*$/.test(v)) setGrams(v)
+          }}
           style={{ width: 70 }}
         />
 
-        <button onClick={() => onAdd(food, grams)}>
+        <button
+          onClick={() => {
+            const g = Number(grams)
+            if (g > 0) onAdd(food, g)
+          }}
+        >
           Add
         </button>
       </div>

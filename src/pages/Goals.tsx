@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
-import { getGoals, saveGoals, type Goals as GoalsType } from '../storage/goalsDb'
+import { getGoals, saveGoals, type Goals } from '../storage/goalsDb'
 
-interface EditableGoals extends GoalsType {
+interface EditableGoals {
+  protein: string
+  carbs: string
+  fats: string
   calories: number
 }
 
 export function Goals() {
   const [goals, setGoals] = useState<EditableGoals>({
-    protein: 0,
-    carbs: 0,
-    fats: 0,
+    protein: '',
+    carbs: '',
+    fats: '',
     calories: 0
   })
 
@@ -18,32 +21,48 @@ export function Goals() {
 
   useEffect(() => {
     getGoals().then(g => {
-      const calories = g.protein * 4 + g.carbs * 4 + g.fats * 9
-      setGoals({ ...g, calories })
+      const protein = String(g.protein || '')
+      const carbs = String(g.carbs || '')
+      const fats = String(g.fats || '')
+
+      setGoals({
+        protein,
+        carbs,
+        fats,
+        calories: calcCalories(protein, carbs, fats)
+      })
+
       setLoaded(true)
     })
   }, [])
 
-  function recalc(next: Omit<EditableGoals, 'calories'>) {
-    return {
-      ...next,
-      calories: next.protein * 4 + next.carbs * 4 + next.fats * 9
-    }
+  function calcCalories(p: string, c: string, f: string) {
+    const protein = Number(p) || 0
+    const carbs = Number(c) || 0
+    const fats = Number(f) || 0
+    return protein * 4 + carbs * 4 + fats * 9
   }
 
-  function update<K extends keyof GoalsType>(key: K, value: number) {
-    const updated = recalc({ ...goals, [key]: value })
-    setGoals(updated)
+  function update(key: keyof Omit<EditableGoals, 'calories'>, value: string) {
+    const next = {
+      ...goals,
+      [key]: value
+    }
+
+    next.calories = calcCalories(next.protein, next.carbs, next.fats)
+
+    setGoals(next)
     setDirty(true)
   }
 
   function save() {
     saveGoals({
-      protein: goals.protein,
-      carbs: goals.carbs,
-      fats: goals.fats,
+      protein: Number(goals.protein) || 0,
+      carbs: Number(goals.carbs) || 0,
+      fats: Number(goals.fats) || 0,
       calories: goals.calories
     })
+
     setDirty(false)
   }
 
@@ -58,11 +77,13 @@ export function Goals() {
         value={goals.protein}
         onChange={v => update('protein', v)}
       />
+
       <GoalInput
         label="Carbs (g)"
         value={goals.carbs}
         onChange={v => update('carbs', v)}
       />
+
       <GoalInput
         label="Fats (g)"
         value={goals.fats}
@@ -71,7 +92,7 @@ export function Goals() {
 
       <GoalInput
         label="Calories (kcal)"
-        value={goals.calories}
+        value={String(goals.calories)}
         readOnly
       />
 
@@ -86,6 +107,8 @@ export function Goals() {
   )
 }
 
+/* ---------- INPUT ---------- */
+
 function GoalInput({
   label,
   value,
@@ -93,18 +116,24 @@ function GoalInput({
   readOnly = false
 }: {
   label: string
-  value: number
-  onChange?: (v: number) => void
+  value: string
+  onChange?: (v: string) => void
   readOnly?: boolean
 }) {
   return (
     <div style={{ marginBottom: 12 }}>
       <label style={{ fontSize: 12 }}>{label}</label>
+
       <input
-        type="number"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
         value={value}
         readOnly={readOnly}
-        onChange={e => onChange?.(+e.target.value)}
+        onChange={e => {
+          const v = e.target.value
+          if (/^\d*$/.test(v)) onChange?.(v)
+        }}
         style={{
           width: '100%',
           background: readOnly ? '#f3f4f6' : undefined
