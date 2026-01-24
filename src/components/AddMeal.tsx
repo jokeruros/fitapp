@@ -73,7 +73,11 @@ export function AddMeal({
     onSave({
       id: uuid(),
       name,
-      foods: items,
+      foods: items.map(item => ({
+        id: item.mealItemId,
+        food_id: item.id,
+        grams: item.grams
+      })),
       eaten: 0
     })
   }

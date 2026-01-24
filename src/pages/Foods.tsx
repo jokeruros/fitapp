@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Food } from '../storage/models'
-import { getFoods, addFood, deleteFood } from '../storage/foods'
+import { getFoods, addFood, deleteFood, updateFood, getFood } from '../storage/foods'
 import { v4 as uuid } from 'uuid'
 
 const PAGE_SIZE = 50
@@ -49,12 +49,19 @@ export function Foods() {
   }
 
   async function save(food: Food) {
+    const data = await getFood(food)
     const calories =
       food.protein * 4 +
       food.carbs * 4 +
       food.fats * 9
-
-    await addFood({ ...food, calories, user: true })
+    if (data) {
+      // console.log('Food exists, updating... ', data)
+      await updateFood(food)
+    }
+    else{
+     // console.log('Food does not exist, adding... ', food)
+      await addFood({ ...food, calories, user: true })
+    }
     setEditing(null)
     load()
   }

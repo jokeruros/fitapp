@@ -1,10 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Meal, Food } from '../storage/models'
-import { calculateFoodForGrams } from '../storage/meals'
 import { getFoods } from '../storage/foods'
 import { v4 as uuid } from 'uuid'
-
-type MealFood = Food & { mealItemId: string }
 
 export function MealCard({
   meal,
@@ -21,19 +18,31 @@ export function MealCard({
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    if (addingFood) getFoods().then(setAllFoods)
-  }, [addingFood])
+    getFoods().then(setAllFoods)
+  }, [])
 
-  const totals = meal.foods.reduce(
-    (acc, f: any) => {
-      acc.calories += f.calories
-      acc.protein += f.protein
-      acc.carbs += f.carbs
-      acc.fats += f.fats
-      return acc
-    },
-    { calories: 0, protein: 0, carbs: 0, fats: 0 }
-  )
+  /* ---------- CALCULATE TOTALS DYNAMICALLY ---------- */
+
+  const totals = useMemo(() => {
+    return meal.foods.reduce(
+      (acc, item) => {
+        const base = allFoods.find(f => f.id === item.food_id)
+        if (!base) return acc
+
+        const factor = item.grams / base.grams
+
+        acc.calories += base.calories * factor
+        acc.protein += base.protein * factor
+        acc.carbs += base.carbs * factor
+        acc.fats += base.fats * factor
+
+        return acc
+      },
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    )
+  }, [meal.foods, allFoods])
+
+  /* ---------- MEAL CONTROLS ---------- */
 
   function inc() {
     update(ms =>
@@ -66,56 +75,60 @@ export function MealCard({
     setEditingName(false)
   }
 
-  function updateFood(mealItemId: string, grams: number) {
+  /* ---------- FOOD MANIPULATION ---------- */
+
+  function updateFood(itemId: string, grams: number) {
     update(ms =>
       ms.map(m =>
         m.id !== meal.id
           ? m
           : {
               ...m,
-              foods: m.foods.map((f: any) =>
-                f.mealItemId === mealItemId
-                  ? calculateFoodForGrams(f, grams)
-                  : f
+              foods: m.foods.map(f =>
+                f.id === itemId ? { ...f, grams } : f
               )
             }
       )
     )
   }
 
-  function removeFood(mealItemId: string) {
+  function removeFood(itemId: string) {
     update(ms =>
       ms.map(m =>
         m.id !== meal.id
           ? m
           : {
               ...m,
-              foods: m.foods.filter(
-                (f: any) => f.mealItemId !== mealItemId
-              )
+              foods: m.foods.filter(f => f.id !== itemId)
             }
       )
     )
   }
 
   function addFood(base: Food, grams: number) {
-    const item = calculateFoodForGrams(base, grams)
-    const withId: MealFood = {
-      ...item,
-      mealItemId: uuid()
-    }
-
     update(ms =>
       ms.map(m =>
         m.id !== meal.id
           ? m
-          : { ...m, foods: [...m.foods, withId] }
+          : {
+              ...m,
+              foods: [
+                ...m.foods,
+                {
+                  id: uuid(),        // meal_item id
+                  food_id: base.id,  // reference
+                  grams
+                }
+              ]
+            }
       )
     )
 
     setAddingFood(false)
     setSearch('')
   }
+
+  /* ---------- RENDER ---------- */
 
   return (
     <div style={{ marginTop: 12 }}>
@@ -184,14 +197,27 @@ export function MealCard({
       {/* EXPANDED */}
       {open && (
         <div style={{ marginTop: 8 }}>
-          {meal.foods.map((food: any) => (
-            <FoodRow
-              key={food.mealItemId}
-              food={food}
-              onChange={g => updateFood(food.mealItemId, g)}
-              onRemove={() => removeFood(food.mealItemId)}
-            />
-          ))}
+          {meal.foods.map(item => {
+            const base = allFoods.find(f => f.id === item.food_id)
+            if (!base) return null
+
+            const factor = item.grams / base.grams
+
+            return (
+              <FoodRow
+                key={item.id}
+                name={base.name}
+                user={base.user}
+                grams={item.grams}
+                protein={base.protein * factor}
+                carbs={base.carbs * factor}
+                fats={base.fats * factor}
+                calories={base.calories * factor}
+                onChange={(g: number) => updateFood(item.id, g)}
+                onRemove={() => removeFood(item.id)}
+              />
+            )
+          })}
 
           <button onClick={() => setAddingFood(a => !a)}>➕ Add Food</button>
 
@@ -222,29 +248,30 @@ export function MealCard({
 /* ---------- FOOD ROW ---------- */
 
 function FoodRow({
-  food,
+  name,
+  user,
+  grams,
+  protein,
+  carbs,
+  fats,
+  calories,
   onChange,
   onRemove
-}: {
-  food: any
-  onChange: (g: number) => void
-  onRemove: () => void
-}) {
-  const [grams, setGrams] = useState(String(food.grams))
-
-  function handleChange(v: string) {
-    if (/^\d*$/.test(v)) setGrams(v)
-  }
+}: any) {
+  const [value, setValue] = useState(String(grams))
 
   return (
     <div style={{ background: '#f9fafb', padding: 10, borderRadius: 8, marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{food.name}</strong>
+        <strong style={{ color: user ? 'green' : '#111827', flex: 1 }}>
+          {name}
+        </strong>
+
         <input
-          value={grams}
+          value={value}
           inputMode="numeric"
-          onChange={e => handleChange(e.target.value)}
-          onBlur={() => onChange(Number(grams || 0))}
+          onChange={e => /^\d*$/.test(e.target.value) && setValue(e.target.value)}
+          onBlur={() => onChange(Number(value || 0))}
           style={{ width: 72, textAlign: 'center' }}
         />
 
@@ -252,14 +279,16 @@ function FoodRow({
       </div>
 
       <div style={{ fontSize: 12, marginTop: 4 }}>
-        Cal {food.calories.toFixed(0)} ·
-        P {food.protein.toFixed(1)} ·
-        C {food.carbs.toFixed(1)} ·
-        F {food.fats.toFixed(1)}
+        Cal {calories.toFixed(0)} ·
+        P {protein.toFixed(1)} ·
+        C {carbs.toFixed(1)} ·
+        F {fats.toFixed(1)}
       </div>
     </div>
   )
 }
+
+/* ---------- ADD FOOD ROW ---------- */
 
 function AddFoodRow({
   food,
@@ -272,7 +301,10 @@ function AddFoodRow({
 
   return (
     <div style={{ background: '#fff', padding: 6, borderRadius: 6, marginBottom: 6 }}>
-       <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{food.name}</strong>
+      <strong style={{ color: food.user ? 'green' : '#111827' }}>
+        {food.name}
+      </strong>
+
       <div style={{ fontSize: 12 }}>
         Cal {food.calories} · P {food.protein} · C {food.carbs} · F {food.fats}
       </div>
