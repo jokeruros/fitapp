@@ -1,8 +1,6 @@
 workflows:
 ios-workflow:
 name: iOS Workflow
-
-```
 environment:
   node: 24
   xcode: latest
@@ -31,4 +29,4 @@ scripts:
 artifacts:
   - build/ios/ipa/*.ipa
   - /tmp/xcodebuild_logs/*.log
-```
+
