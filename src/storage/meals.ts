@@ -1,16 +1,17 @@
 import type { Food } from './models'
 
-export function calculateFoodForGrams(food: Food, grams: number): Food {
+export function calculateFoodForGrams<T extends Food>(food: T, grams: number): T {
   const factor = grams / food.grams
 
   return {
     ...food,
     grams,
+    baseGrams: food.baseGrams ?? food.grams,
     calories: food.calories * factor,
     protein: food.protein * factor,
     carbs: food.carbs * factor,
     fats: food.fats * factor
-  }
+  } as T
 }
 
 export function calculateMealTotals(foods: Food[]) {

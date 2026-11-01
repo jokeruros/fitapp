@@ -1,0 +1,2 @@
+[functions.send-daily-progress-reminders]
+verify_jwt = false

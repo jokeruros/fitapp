@@ -8,7 +8,11 @@ interface EditableGoals {
   calories: number
 }
 
-export function Goals() {
+function calcCalories(protein: string, carbs: string, fats: string) {
+  return (Number(protein) || 0) * 4 + (Number(carbs) || 0) * 4 + (Number(fats) || 0) * 9
+}
+
+export function Goals({ t }: { t: (key: string) => string }) {
   const [goals, setGoals] = useState<EditableGoals>({
     protein: '',
     carbs: '',
@@ -18,6 +22,8 @@ export function Goals() {
 
   const [loaded, setLoaded] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState('')
 
   useEffect(() => {
     getGoals().then(g => {
@@ -36,13 +42,6 @@ export function Goals() {
     })
   }, [])
 
-  function calcCalories(p: string, c: string, f: string) {
-    const protein = Number(p) || 0
-    const carbs = Number(c) || 0
-    const fats = Number(f) || 0
-    return protein * 4 + carbs * 4 + fats * 9
-  }
-
   function update(key: keyof Omit<EditableGoals, 'calories'>, value: string) {
     const next = {
       ...goals,
@@ -53,56 +52,66 @@ export function Goals() {
 
     setGoals(next)
     setDirty(true)
+    setStatus('')
   }
 
-  function save() {
-    saveGoals({
-      protein: Number(goals.protein) || 0,
-      carbs: Number(goals.carbs) || 0,
-      fats: Number(goals.fats) || 0,
-      calories: goals.calories
-    })
-
-    setDirty(false)
+  async function save() {
+    setSaving(true)
+    setStatus(t('goalsSaving'))
+    try {
+      await saveGoals({
+        protein: Number(goals.protein) || 0,
+        carbs: Number(goals.carbs) || 0,
+        fats: Number(goals.fats) || 0,
+        calories: goals.calories
+      })
+      setDirty(false)
+      setStatus(t('goalsSaved'))
+    } catch {
+      setStatus(t('goalsError'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!loaded) return null
 
   return (
     <div style={{ padding: 12 }}>
-      <h3>Daily Goals</h3>
+      <h3>{t('dailyGoals')}</h3>
 
       <GoalInput
-        label="Protein (g)"
+        label={t('proteinGoal')}
         value={goals.protein}
         onChange={v => update('protein', v)}
       />
 
       <GoalInput
-        label="Carbs (g)"
+        label={t('carbsGoal')}
         value={goals.carbs}
         onChange={v => update('carbs', v)}
       />
 
       <GoalInput
-        label="Fats (g)"
+        label={t('fatsGoal')}
         value={goals.fats}
         onChange={v => update('fats', v)}
       />
 
       <GoalInput
-        label="Calories (kcal)"
+        label={t('calorieGoal')}
         value={String(goals.calories)}
         readOnly
       />
 
       <button
-        onClick={save}
-        disabled={!dirty}
+        onClick={() => void save()}
+        disabled={!dirty || saving}
         style={{ marginTop: 12, width: '100%' }}
       >
-        Save
+        {saving ? t('saving') : t('save')}
       </button>
+      {status && <p className="settings-status" role="status">{status}</p>}
     </div>
   )
 }

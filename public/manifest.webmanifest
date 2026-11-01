@@ -1,0 +1,14 @@
+{
+  "id": "/",
+  "name": "NutriTrack",
+  "short_name": "NutriTrack",
+  "description": "Track meals, nutrition goals, and daily progress.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#edf4fb",
+  "theme_color": "#142f59",
+  "icons": [
+    { "src": "/nutritrack-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

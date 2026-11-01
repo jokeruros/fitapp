@@ -5,11 +5,16 @@ import { AddMeal } from '../components/AddMeal'
 import { getMeals, saveMeals } from '../storage/mealsDb'
 import { getGoals, type Goals } from '../storage/goalsDb'
 import { Ring } from '../components/Ring'
+import { localDateKey, getDailyProgress, saveDailyProgress } from '../storage/dailyProgress'
+import type { LanguageCode } from '../i18n'
 
-export function Dashboard() {
+export function Dashboard({ t, foodLanguage, language }: { t: (key: string) => string; foodLanguage: LanguageCode; language: string }) {
+  const dateLocale = language === 'sr' ? 'sr-Latn' : language
   const [meals, setMeals] = useState<Meal[]>([])
   const [adding, setAdding] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [todaySaved, setTodaySaved] = useState(false)
+  const [progressStatus, setProgressStatus] = useState('')
 
   const [goals, setGoals] = useState<Goals>({
     calories: 0,
@@ -25,6 +30,10 @@ export function Dashboard() {
 
   useEffect(() => {
     getGoals().then(setGoals)
+  }, [])
+
+  useEffect(() => {
+    getDailyProgress().then(records => setTodaySaved(records.some(record => record.date === localDateKey())))
   }, [])
 
   useEffect(() => {
@@ -51,45 +60,59 @@ export function Dashboard() {
     { calories: 0, protein: 0, carbs: 0, fats: 0 }
   )
 
- return (
-  <div
-    style={{
-      padding: 12,
-      paddingBottom: 80,
-      maxWidth: '100vw',
-      overflowX: 'hidden'
-    }}
-  >
-    {/* PROGRESS */}
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 12,
-        marginBottom: 16
-      }}
-    >
-      <Ring label="Calories" value={totals.calories} goal={calorieGoal} color="#2563eb" />
-      <Ring label="Protein" value={totals.protein} goal={goals.protein} color="#16a34a" />
-      <Ring label="Carbs" value={totals.carbs} goal={goals.carbs} color="#ca8a04" />
-      <Ring label="Fats" value={totals.fats} goal={goals.fats} color="#dc2626" />
-    </div>
+  async function saveToday() {
+    setProgressStatus(t('saving'))
+    try {
+      await saveDailyProgress({
+        date: localDateKey(),
+        savedAt: new Date().toISOString(),
+        goals: {
+          calories: calorieGoal,
+          protein: goals.protein,
+          carbs: goals.carbs,
+          fats: goals.fats
+        },
+        achieved: totals
+      })
+      setTodaySaved(true)
+      setProgressStatus(t('progressSaved'))
+    } catch {
+      setProgressStatus(t('progressError'))
+    }
+  }
 
-    {/* ADD MEAL */}
-    <button
-      style={{
-    width: '100%',
-    background: '#1f2937',
-    color: 'white',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    fontWeight: 600
-  }}
-      onClick={() => setAdding(v => !v)}
-    >
-      ➕ Add Meal
-    </button>
+ return (
+  <main className="today-page">
+    <header className="today-heading">
+      <div>
+        <p className="calendar-eyebrow">{t('dailyOverview')}</p>
+        <h1>{t('navToday')}</h1>
+        <p>{new Date().toLocaleDateString(dateLocale, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
+      </div>
+      <div className="save-progress-area">
+        <button className={`save-progress-button${todaySaved ? ' saved' : ''}`} onClick={saveToday}>
+          {todaySaved ? `✓ ${t('updateToday')}` : `✓ ${t('saveToday')}`}
+        </button>
+        {progressStatus && <p role="status" className="progress-status">{progressStatus}</p>}
+      </div>
+    </header>
+
+    <section className="progress-overview" aria-label={t('progressAria')}>
+      <div className="progress-grid">
+        <div className="progress-ring-card"><Ring label={t('calories')} value={totals.calories} goal={calorieGoal} color="#22c55e" /></div>
+        <div className="progress-ring-card"><Ring label={t('protein')} value={totals.protein} goal={goals.protein} color="#16a34a" /></div>
+        <div className="progress-ring-card"><Ring label={t('carbs')} value={totals.carbs} goal={goals.carbs} color="#2563eb" /></div>
+        <div className="progress-ring-card"><Ring label={t('fats')} value={totals.fats} goal={goals.fats} color="#f59e0b" /></div>
+      </div>
+    </section>
+
+    <section className="meals-section" id="meals">
+      <div className="section-heading">
+        <h2>{t('navMeals')}</h2>
+        <button className="add-meal-button" onClick={() => setAdding(v => !v)}>
+          {adding ? t('closeMealForm') : t('addMeal')}
+        </button>
+      </div>
 
     {adding && (
       <div
@@ -101,6 +124,8 @@ export function Dashboard() {
         }}
       >
         <AddMeal
+          t={t}
+          foodLanguage={foodLanguage}
           onSave={meal => {
             setMeals(m => [...m, meal])
             setAdding(false)
@@ -110,12 +135,13 @@ export function Dashboard() {
       </div>
     )}
 
-    {/* MEALS */}
-    <div>
+    <div className="meal-list">
       {meals.map(meal => (
-        <MealCard key={meal.id} meal={meal} update={setMeals} />
+        <MealCard key={meal.id} meal={meal} update={setMeals} t={t} foodLanguage={foodLanguage} />
       ))}
+      {!meals.length && <p className="empty-meals">{t('noMeals')}</p>}
     </div>
-  </div>
+    </section>
+  </main>
 )
 }

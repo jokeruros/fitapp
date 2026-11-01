@@ -1,28 +1,39 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Food } from '../storage/models'
-import { getFoods, addFood, deleteFood } from '../storage/foods'
+import { getFoods, addFood, deleteFood, updateFood, isUsingLocalSystemCatalog } from '../storage/foods'
 import { v4 as uuid } from 'uuid'
+import { foodNutritionLabel, formatFoodAmount, formatFoodNutrition, formatFoodUnit, translateFoodName, type LanguageCode } from '../i18n'
 
 const PAGE_SIZE = 50
 
-export function Foods() {
+export function Foods({ t, foodLanguage }: { t: (key: string) => string; foodLanguage: LanguageCode }) {
   const [foods, setFoods] = useState<Food[]>([])
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 150)
   const [editing, setEditing] = useState<Food | null>(null)
+  const [isAdding, setIsAdding] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [catalogFallback, setCatalogFallback] = useState(false)
 
   const editorRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
-    load()
+  const refreshFoods = useCallback(async () => {
+    setFoods(await getFoods())
+    setCatalogFallback(isUsingLocalSystemCatalog())
   }, [])
 
-  async function load() {
-    setFoods(await getFoods())
-  }
+  useEffect(() => {
+    let active = true
+    getFoods().then(items => {
+      if (!active) return
+      setFoods(items)
+      setCatalogFallback(isUsingLocalSystemCatalog())
+    })
+    return () => { active = false }
+  }, [])
 
   function startAdd() {
+    setIsAdding(true)
     setEditing({
       id: uuid(),
       name: '',
@@ -31,6 +42,7 @@ export function Foods() {
       fats: 0,
       calories: 0,
       grams: 100,
+      unit: 'g',
       user: true
     })
 
@@ -40,7 +52,7 @@ export function Foods() {
   }
 
   function startEdit(food: Food) {
-    if (!food.user) return
+    setIsAdding(false)
     setEditing({ ...food })
 
     setTimeout(() => {
@@ -54,14 +66,17 @@ export function Foods() {
       food.carbs * 4 +
       food.fats * 9
 
-    await addFood({ ...food, calories, user: true })
+    const updated = { ...food, calories }
+    if (isAdding) await addFood({ ...updated, user: true })
+    else await updateFood({ ...updated, user: food.user })
     setEditing(null)
-    load()
+    setIsAdding(false)
+    await refreshFoods()
   }
 
   async function remove(id: string) {
     await deleteFood(id)
-    load()
+    await refreshFoods()
   }
 
   const filtered = useMemo(() => {
@@ -70,31 +85,37 @@ export function Foods() {
     const system: Food[] = []
 
     for (const f of foods) {
-      if (q && !f.name.toLowerCase().includes(q)) continue
-      f.user ? user.push(f) : system.push(f)
+      if (q && !f.name.toLowerCase().includes(q) && !translateFoodName(f, foodLanguage).toLowerCase().includes(q)) continue
+      if (f.user) user.push(f)
+      else system.push(f)
     }
 
     return [...user, ...system]
-  }, [foods, debouncedSearch])
-
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE)
-  }, [debouncedSearch])
+  }, [foods, debouncedSearch, foodLanguage])
 
   const visibleFoods = filtered.slice(0, visibleCount)
 
   return (
     <div style={{ padding: 12 }}>
-      <h3>Foods</h3>
+      <h3>{t('navFoods')}</h3>
 
       <input
-        placeholder="Search food..."
+        placeholder={t('foodsSearch')}
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={e => {
+          setSearch(e.target.value)
+          setVisibleCount(PAGE_SIZE)
+        }}
         style={{ width: '100%', marginBottom: 8 }}
       />
 
-      <button onClick={startAdd}>➕ Add Food</button>
+      <button onClick={startAdd}>{t('addFood')}</button>
+
+      {catalogFallback && (
+        <p role="status" style={{ fontSize: 12 }}>
+          {t('fallbackCatalogNotice')}
+        </p>
+      )}
 
       <div
         style={{ marginTop: 12, maxHeight: 500, overflowY: 'auto' }}
@@ -119,21 +140,17 @@ export function Foods() {
             }}
           >
             <strong style={{ color: f.user ? 'green' : '#111827' }}>
-              {f.name}
+              {translateFoodName(f, foodLanguage)}
             </strong>
 
             <div style={{ fontSize: 12 }}>
-              {f.grams}
-              {f.grams === 1 ? '' : 'g'} | Cal {f.calories} | P {f.protein} | C{' '}
-              {f.carbs} | F {f.fats}
+              {formatFoodAmount(f.grams, foodLanguage)} {formatFoodUnit(f.unit, foodLanguage)} | {formatFoodNutrition(f, foodLanguage)}
             </div>
 
-            {f.user && (
-              <div>
-                <button onClick={() => startEdit(f)}>Edit</button>{' '}
-                <button onClick={() => remove(f.id)}>Delete</button>
-              </div>
-            )}
+            <div>
+              <button onClick={() => startEdit(f)}>{t('edit')}</button>{' '}
+              {f.user && <button onClick={() => remove(f.id)}>{t('delete')}</button>}
+            </div>
           </div>
         ))}
       </div>
@@ -142,6 +159,8 @@ export function Foods() {
         <div ref={editorRef}>
           <FoodEditor
             food={editing}
+            t={t}
+            foodLanguage={foodLanguage}
             onSave={save}
             onCancel={() => setEditing(null)}
           />
@@ -155,15 +174,20 @@ export function Foods() {
 
 function FoodEditor({
   food,
+  t,
+  foodLanguage,
   onSave,
   onCancel
 }: {
   food: Food
+  t: (key: string) => string
+  foodLanguage: LanguageCode
   onSave: (f: Food) => void
   onCancel: () => void
 }) {
   const [name, setName] = useState(food.name)
   const [grams, setGrams] = useState<string>(String(food.grams ?? ''))
+  const [unit, setUnit] = useState<NonNullable<Food['unit']>>(food.unit ?? 'g')
   const [protein, setProtein] = useState<string>(String(food.protein ?? ''))
   const [carbs, setCarbs] = useState<string>(String(food.carbs ?? ''))
   const [fats, setFats] = useState<string>(String(food.fats ?? ''))
@@ -178,6 +202,7 @@ function FoodEditor({
       ...food,
       name,
       grams: Number(grams || 0),
+      unit,
       protein: Number(protein || 0),
       carbs: Number(carbs || 0),
       fats: Number(fats || 0),
@@ -201,11 +226,11 @@ function FoodEditor({
         borderRadius: 8
       }}
     >
-      <h4>{food.name ? 'Edit Food' : 'Add Food'}</h4>
+      <h4>{food.name ? t('edit') : t('addFood')}</h4>
 
       <div style={{ marginBottom: 8 }}>
         <label>
-          Name
+          {t('foodName')}
           <input
             value={name}
             onChange={e => setName(e.target.value)}
@@ -214,9 +239,9 @@ function FoodEditor({
         </label>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+      <div className="food-editor-nutrition-row" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <label>
-          Amount (g)
+          {t('baseAmount')}
           <input
             type="text"
             inputMode="numeric"
@@ -225,9 +250,18 @@ function FoodEditor({
             onChange={numericSetter(setGrams)}
           />
         </label>
+        <label>
+          {t('unit')}
+          <select value={unit} onChange={e => setUnit(e.target.value as NonNullable<Food['unit']>)}>
+            <option value="g">{formatFoodUnit('g', foodLanguage)}</option>
+            <option value="ml">{formatFoodUnit('ml', foodLanguage)}</option>
+            <option value="piece">{formatFoodUnit('piece', foodLanguage)}</option>
+            <option value="serving">{formatFoodUnit('serving', foodLanguage)}</option>
+          </select>
+        </label>
 
         <label>
-          Protein (g)
+          {foodNutritionLabel('protein', foodLanguage)} (g)
           <input
             type="text"
             inputMode="numeric"
@@ -238,7 +272,7 @@ function FoodEditor({
         </label>
 
         <label>
-          Carbs (g)
+          {foodNutritionLabel('carbs', foodLanguage)} (g)
           <input
             type="text"
             inputMode="numeric"
@@ -249,7 +283,7 @@ function FoodEditor({
         </label>
 
         <label>
-          Fats (g)
+          {foodNutritionLabel('fats', foodLanguage)} (g)
           <input
             type="text"
             inputMode="numeric"
@@ -261,13 +295,13 @@ function FoodEditor({
       </div>
 
       <div style={{ fontWeight: 500 }}>
-        Calories: {calories} kcal
+        {foodNutritionLabel('calories', foodLanguage)}: {calories} kcal
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <button onClick={save}>Save</button>
+        <button onClick={save}>{t('save')}</button>
         <button onClick={onCancel} style={{ marginLeft: 8 }}>
-          Cancel
+          {t('cancel')}
         </button>
       </div>
     </div>

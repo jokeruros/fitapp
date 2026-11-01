@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid'
 import type { Meal, Food } from '../storage/models'
 import { getFoods } from '../storage/foods'
 import { calculateFoodForGrams } from '../storage/meals'
+import { formatFoodAmount, formatFoodNutrition, formatFoodUnit, translateFoodName, type LanguageCode } from '../i18n'
 
 type MealFood = Food & { mealItemId: string }
 
@@ -10,10 +11,14 @@ const PAGE_SIZE = 3
 
 export function AddMeal({
   onSave,
-  onClose
+  onClose,
+  t,
+  foodLanguage
 }: {
   onSave: (meal: Meal) => void
   onClose: () => void
+  t: (key: string) => string
+  foodLanguage: LanguageCode
 }) {
   const [name, setName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
@@ -26,22 +31,19 @@ export function AddMeal({
     getFoods().then(setFoods)
   }, [])
 
-  useEffect(() => {
-    setPage(0)
-  }, [search])
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     const user: Food[] = []
     const system: Food[] = []
 
     for (const f of foods) {
-      if (q && !f.name.toLowerCase().includes(q)) continue
-      f.user ? user.push(f) : system.push(f)
+      if (q && !f.name.toLowerCase().includes(q) && !translateFoodName(f, foodLanguage).toLowerCase().includes(q)) continue
+      if (f.user) user.push(f)
+      else system.push(f)
     }
 
     return [...user, ...system]
-  }, [foods, search])
+  }, [foods, search, foodLanguage])
 
   const paged = filtered.slice(
     page * PAGE_SIZE,
@@ -80,19 +82,22 @@ export function AddMeal({
 
   return (
     <div style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
-      <h3>Create Meal</h3>
+      <h3>{t('createMeal')}</h3>
 
       <input
         value={name}
         onChange={e => setName(e.target.value)}
-        placeholder="Meal name"
+        placeholder={t('mealName')}
         style={{ width: '100%', marginBottom: 8 }}
       />
 
       <input
-        placeholder="Search food..."
+        placeholder={t('searchFood')}
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={e => {
+          setSearch(e.target.value)
+          setPage(0)
+        }}
         style={{ width: '100%', marginBottom: 8 }}
       />
 
@@ -103,6 +108,8 @@ export function AddMeal({
           food={f}
           onAdd={addFood}
           active={f.id === justAdded}
+          t={t}
+          foodLanguage={foodLanguage}
         />
       ))}
 
@@ -118,7 +125,7 @@ export function AddMeal({
           disabled={page === 0}
           onClick={() => setPage(p => Math.max(0, p - 1))}
         >
-          Prev
+          {t('previous')}
         </button>
 
         <span style={{ fontSize: 12 }}>
@@ -129,7 +136,7 @@ export function AddMeal({
           disabled={(page + 1) * PAGE_SIZE >= filtered.length}
           onClick={() => setPage(p => p + 1)}
         >
-          Next
+          {t('next')}
         </button>
       </div>
 
@@ -152,7 +159,7 @@ export function AddMeal({
               }}
             >
               <span>
-                {item.name} — {item.grams}g
+                {translateFoodName(item, foodLanguage)} — {formatFoodAmount(item.grams, foodLanguage)} {formatFoodUnit(item.unit, foodLanguage)}
               </span>
               <button onClick={() => removeFood(item.mealItemId)}>✕</button>
             </div>
@@ -163,11 +170,11 @@ export function AddMeal({
       <hr />
 
       <button onClick={save} style={{ marginTop: 8 }}>
-        Save Meal
+        {t('saveMeal')}
       </button>
 
       <button onClick={onClose} style={{ marginLeft: 8 }}>
-        Cancel
+        {t('cancel')}
       </button>
     </div>
   )
@@ -178,13 +185,17 @@ export function AddMeal({
 function FoodPickRow({
   food,
   onAdd,
-  active
+  active,
+  t,
+  foodLanguage
 }: {
   food: Food
   onAdd: (food: Food, grams: number) => void
   active: boolean
+  t: (key: string) => string
+  foodLanguage: LanguageCode
 }) {
-  const [grams, setGrams] = useState('100')
+  const [grams, setGrams] = useState(String(food.grams))
 
   return (
     <div
@@ -199,11 +210,11 @@ function FoodPickRow({
       }}
     >
       <strong style={{ color: food.user ? 'green' : '#111827' }}>
-        {food.name}
+        {translateFoodName(food, foodLanguage)}
       </strong>
 
       <div style={{ fontSize: 12, color: '#374151' }}>
-        100g → Cal {food.calories} | P {food.protein} | C {food.carbs} | F {food.fats}
+        {formatFoodAmount(food.grams, foodLanguage)} {formatFoodUnit(food.unit, foodLanguage)} → {formatFoodNutrition(food, foodLanguage)}
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
@@ -213,9 +224,10 @@ function FoodPickRow({
           onChange={e => /^\d*$/.test(e.target.value) && setGrams(e.target.value)}
           style={{ width: 70 }}
         />
+        <span>{formatFoodUnit(food.unit, foodLanguage)}</span>
 
         <button onClick={() => onAdd(food, Number(grams || 0))}>
-          Add
+          {t('add')}
         </button>
       </div>
     </div>

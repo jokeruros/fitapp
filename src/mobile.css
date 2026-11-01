@@ -6,12 +6,10 @@
 
 body {
   margin: 0;
+  display: block;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro", system-ui, sans-serif;
-
-  background: url("back_pic.png") no-repeat center center fixed;
-  background-size: cover;
-
+  background: linear-gradient(135deg, #eef6ff 0%, #f8fbff 55%, #edf3f9 100%);
   color: #111;
 }
 button {
@@ -48,28 +46,10 @@ input {
   padding: 12px;
 }
 
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 70px;
-  background: white;
-  display: flex;
-  border-top: 1px solid #e5e7eb;
-}
-
-.bottom-nav button {
-  flex: 1;
-  background: none;
-  color: #111;
-  font-size: 14px;
-}
-
 .meal-btn {
-  background: transparent;
-  color: #cbd5f5;
-  border: 1px solid rgba(203, 213, 245, 0.35);
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
   padding: 6px 12px;
   font-size: 14px;

@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react'
-import type { Meal, Food } from '../storage/models'
+import type { Meal, MealFood, Food } from '../storage/models'
 import { calculateFoodForGrams } from '../storage/meals'
 import { getFoods } from '../storage/foods'
 import { v4 as uuid } from 'uuid'
-
-type MealFood = Food & { mealItemId: string }
+import { formatCompactFoodNutrition, formatFoodAmount, formatFoodNutrition, formatFoodUnit, translateFoodName, type LanguageCode } from '../i18n'
 
 export function MealCard({
   meal,
-  update
+  update,
+  t,
+  foodLanguage
 }: {
   meal: Meal
   update: React.Dispatch<React.SetStateAction<Meal[]>>
+  t: (key: string) => string
+  foodLanguage: LanguageCode
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(meal.name)
   const [addingFood, setAddingFood] = useState(false)
@@ -25,7 +28,7 @@ export function MealCard({
   }, [addingFood])
 
   const totals = meal.foods.reduce(
-    (acc, f: any) => {
+    (acc, f) => {
       acc.calories += f.calories
       acc.protein += f.protein
       acc.carbs += f.carbs
@@ -73,7 +76,7 @@ export function MealCard({
           ? m
           : {
               ...m,
-              foods: m.foods.map((f: any) =>
+              foods: m.foods.map(f =>
                 f.mealItemId === mealItemId
                   ? calculateFoodForGrams(f, grams)
                   : f
@@ -90,9 +93,7 @@ export function MealCard({
           ? m
           : {
               ...m,
-              foods: m.foods.filter(
-                (f: any) => f.mealItemId !== mealItemId
-              )
+              foods: m.foods.filter(f => f.mealItemId !== mealItemId)
             }
       )
     )
@@ -118,15 +119,17 @@ export function MealCard({
   }
 
   return (
-    <div style={{ marginTop: 12 }}>
+    <div className="meal-card" style={{ marginTop: 12 }}>
       {/* HEADER */}
       <div
         onClick={() => setOpen(o => !o)}
         style={{
-          background: '#1f2937',
-          borderRadius: 12,
-          padding: 10,
-          color: 'white'
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: 14,
+          padding: 12,
+          color: '#0f172a',
+          boxShadow: '0 4px 16px rgba(15,23,42,.05)'
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 8 }}>
@@ -148,7 +151,7 @@ export function MealCard({
               />
             ) : (
               <div style={{ fontWeight: 600 }}>
-                {meal.name || 'Meal'}
+                {meal.name || t('navMeals')}
                 {meal.eaten ? ` (x${meal.eaten})` : ''}
               </div>
             )}
@@ -168,48 +171,48 @@ export function MealCard({
         <div
           style={{
             display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4px 12px',
             justifyContent: 'space-between',
             fontSize: 12,
             marginTop: 6,
-            color: '#9ca3af'
+              color: '#64748b'
           }}
         >
-          <span>Cal {totals.calories.toFixed(0)}</span>
-          <span>P {totals.protein.toFixed(1)}</span>
-          <span>C {totals.carbs.toFixed(1)}</span>
-          <span>F {totals.fats.toFixed(1)}</span>
+          {formatCompactFoodNutrition(totals, foodLanguage).map((summary, index) => <span key={index}>{summary}</span>)}
         </div>
       </div>
 
       {/* EXPANDED */}
       {open && (
         <div style={{ marginTop: 8 }}>
-          {meal.foods.map((food: any) => (
+          {meal.foods.map((food: MealFood) => (
             <FoodRow
               key={food.mealItemId}
               food={food}
+              foodLanguage={foodLanguage}
               onChange={g => updateFood(food.mealItemId, g)}
               onRemove={() => removeFood(food.mealItemId)}
             />
           ))}
 
-          <button onClick={() => setAddingFood(a => !a)}>➕ Add Food</button>
+          <button onClick={() => setAddingFood(a => !a)}>{t('addFood')}</button>
 
           {addingFood && (
             <div style={{ marginTop: 8 }}>
               <input
-                placeholder="Search food..."
+                placeholder={t('searchFood')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
 
               {allFoods
                 .filter(f =>
-                  f.name.toLowerCase().includes(search.toLowerCase())
+                  f.name.toLowerCase().includes(search.toLowerCase()) || translateFoodName(f, foodLanguage).toLowerCase().includes(search.toLowerCase())
                 )
                 .slice(0, 5)
                 .map(f => (
-                  <AddFoodRow key={f.id} food={f} onAdd={addFood} />
+                  <AddFoodRow key={f.id} food={f} onAdd={addFood} t={t} foodLanguage={foodLanguage} />
                 ))}
             </div>
           )}
@@ -224,11 +227,13 @@ export function MealCard({
 function FoodRow({
   food,
   onChange,
-  onRemove
+  onRemove,
+  foodLanguage
 }: {
-  food: any
+  food: MealFood
   onChange: (g: number) => void
   onRemove: () => void
+  foodLanguage: LanguageCode
 }) {
   const [grams, setGrams] = useState(String(food.grams))
 
@@ -239,7 +244,7 @@ function FoodRow({
   return (
     <div style={{ background: '#f9fafb', padding: 10, borderRadius: 8, marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{food.name}</strong>
+        <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{translateFoodName(food, foodLanguage)}</strong>
         <input
           value={grams}
           inputMode="numeric"
@@ -247,15 +252,13 @@ function FoodRow({
           onBlur={() => onChange(Number(grams || 0))}
           style={{ width: 72, textAlign: 'center' }}
         />
+        <span>{formatFoodUnit(food.unit, foodLanguage)}</span>
 
         <button onClick={onRemove}>✕</button>
       </div>
 
       <div style={{ fontSize: 12, marginTop: 4 }}>
-        Cal {food.calories.toFixed(0)} ·
-        P {food.protein.toFixed(1)} ·
-        C {food.carbs.toFixed(1)} ·
-        F {food.fats.toFixed(1)}
+        {formatFoodAmount(food.grams, foodLanguage)} {formatFoodUnit(food.unit, foodLanguage)} | {formatFoodNutrition(food, foodLanguage)}
       </div>
     </div>
   )
@@ -263,18 +266,22 @@ function FoodRow({
 
 function AddFoodRow({
   food,
-  onAdd
+  onAdd,
+  t,
+  foodLanguage
 }: {
   food: Food
   onAdd: (f: Food, g: number) => void
+  t: (key: string) => string
+  foodLanguage: LanguageCode
 }) {
-  const [grams, setGrams] = useState('100')
+  const [grams, setGrams] = useState(String(food.grams))
 
   return (
     <div style={{ background: '#fff', padding: 6, borderRadius: 6, marginBottom: 6 }}>
-       <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{food.name}</strong>
+       <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{translateFoodName(food, foodLanguage)}</strong>
       <div style={{ fontSize: 12 }}>
-        Cal {food.calories} · P {food.protein} · C {food.carbs} · F {food.fats}
+        {formatFoodAmount(food.grams, foodLanguage)} {formatFoodUnit(food.unit, foodLanguage)} | {formatFoodNutrition(food, foodLanguage)}
       </div>
 
       <input
@@ -284,8 +291,9 @@ function AddFoodRow({
         style={{ width: 72 }}
       />
 
+      <span>{formatFoodUnit(food.unit, foodLanguage)}</span>
       <button onClick={() => onAdd(food, Number(grams || 0))}>
-        Add
+        {t('add')}
       </button>
     </div>
   )

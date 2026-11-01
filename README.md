@@ -1,5 +1,19 @@
 # React + TypeScript + Vite
 
+## Supabase setup
+
+1. Create a Supabase project.
+2. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from the project's API settings. A legacy anon key can be used instead by setting `VITE_SUPABASE_ANON_KEY`.
+3. Run `supabase/migrations/20261031_user_data.sql` in the Supabase SQL Editor. It creates the user data table and row-level security policies.
+4. Run `supabase/migrations/20261101_system_foods.sql` in the SQL Editor. It seeds the shared system-food catalog and permits per-user food overrides.
+5. Run `supabase/migrations/20261101_daily_progress.sql` in the SQL Editor to allow per-user daily progress snapshots.
+6. Run `supabase/migrations/20261101_user_preferences.sql` to allow per-user language preferences.
+7. Run `npm run dev` and create an account in the app.
+
+The app stores each user's foods, goals, meals, and system-food edits in PostgreSQL. Daily progress snapshots are stored in a dedicated `daily_progress` table, with one row per user and date. The dashboard button saves that day's achieved nutrition and goal values; the calendar displays those snapshots. Foods use grams, milliliters, pieces, or servings; the catalog migration assigns units from the source food list. New foods can choose their unit. The base system-food catalog is shared; editing a system food saves a private override for that account and updates matching saved meal entries so their totals recalculate. Row-level security limits private data to the signed-in user. On first sign-in, existing local foods, goals, and meals are copied to Supabase if that account has no cloud copy yet. Local data is retained. Passwords are handled by Supabase Auth and are not copied from the old local database.
+
+Never put a Supabase service-role key in the browser app. Use the publishable key (or legacy anon key) with the SQL migration's row-level policies.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
