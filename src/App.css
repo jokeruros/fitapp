@@ -497,3 +497,27 @@ div {
   .food-editor-nutrition-row > label { flex: 1 1 120px; min-width: 0; }
   .food-editor-nutrition-row input, .food-editor-nutrition-row select { max-width: 100%; }
 }
+
+
+/* Add meal dialog contrast across themes */
+.add-meal-editor { background: rgba(255,255,255,.96); color: #0f172a; }
+.add-meal-editor h3 { color: #0f172a; }
+.food-picker-card { color: #0f172a; }
+.food-picker-name { color: #111827; }
+.food-picker-name.user-food-name { color: #15803d; }
+.food-picker-nutrition { color: #334155; }
+.food-picker-unit { color: #475569; font-weight: 600; }
+.food-picker-quantity { color: #0f172a; }
+.meal-selected-food-row { color: #0f172a; }
+.meal-selected-food-label { color: #0f172a; font-weight: 600; }
+:root[data-theme="dark"] .add-meal-editor { background: rgba(17,28,45,.96); border-color: #30435e !important; color: #e5edf8; }
+:root[data-theme="dark"] .add-meal-editor h3 { color: #f1f5fb; }
+:root[data-theme="dark"] .food-picker-card { background: #17243a !important; border-color: #30435e !important; color: #e5edf8; }
+:root[data-theme="dark"] .food-picker-card.food-picker-card-added { background: #173b32 !important; border-color: #318267 !important; }
+:root[data-theme="dark"] .food-picker-name { color: #f1f5fb !important; }
+:root[data-theme="dark"] .food-picker-name.user-food-name { color: #86efac !important; }
+:root[data-theme="dark"] .food-picker-nutrition { color: #c8d5e7 !important; }
+:root[data-theme="dark"] .food-picker-unit { color: #d5dfed !important; }
+:root[data-theme="dark"] .food-picker-quantity { background: #0c1727 !important; border-color: #3a4e69 !important; color: #f1f5fb !important; }
+:root[data-theme="dark"] .meal-selected-food-row { background: #17243a !important; color: #e5edf8 !important; }
+:root[data-theme="dark"] .meal-selected-food-label { color: #e5edf8 !important; }

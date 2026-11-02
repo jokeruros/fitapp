@@ -81,7 +81,7 @@ export function AddMeal({
   }
 
   return (
-    <div style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
+    <div className="add-meal-editor" style={{ padding: 12, border: '1px solid #e5e7eb', borderRadius: 12 }}>
       <h3>{t('createMeal')}</h3>
 
       <input
@@ -147,6 +147,7 @@ export function AddMeal({
           {items.map(item => (
             <div
               key={item.mealItemId}
+              className="meal-selected-food-row"
               style={{
                 fontSize: 12,
                 padding: 6,
@@ -158,7 +159,7 @@ export function AddMeal({
                 alignItems: 'center'
               }}
             >
-              <span>
+              <span className="meal-selected-food-label">
                 {translateFoodName(item, foodLanguage)} — {formatFoodAmount(item.grams, foodLanguage)} {formatFoodUnit(item.unit, foodLanguage)}
               </span>
               <button onClick={() => removeFood(item.mealItemId)}>✕</button>
@@ -199,6 +200,7 @@ function FoodPickRow({
 
   return (
     <div
+      className={'food-picker-card' + (active ? ' food-picker-card-added' : '')}
       style={{
         fontSize: 13,
         marginBottom: 8,
@@ -209,11 +211,11 @@ function FoodPickRow({
         transition: 'background 0.4s'
       }}
     >
-      <strong style={{ color: food.user ? 'green' : '#111827' }}>
+      <strong className={'food-picker-name' + (food.user ? ' user-food-name' : '')}>
         {translateFoodName(food, foodLanguage)}
       </strong>
 
-      <div style={{ fontSize: 12, color: '#374151' }}>
+      <div className="food-picker-nutrition" style={{ fontSize: 12 }}>
         {formatFoodAmount(food.grams, foodLanguage)} {formatFoodUnit(food.unit, foodLanguage)} → {formatFoodNutrition(food, foodLanguage)}
       </div>
 
@@ -224,7 +226,7 @@ function FoodPickRow({
           onChange={e => /^\d*$/.test(e.target.value) && setGrams(e.target.value)}
           style={{ width: 70 }}
         />
-        <span>{formatFoodUnit(food.unit, foodLanguage)}</span>
+        <span className="food-picker-unit">{formatFoodUnit(food.unit, foodLanguage)}</span>
 
         <button onClick={() => onAdd(food, Number(grams || 0))}>
           {t('add')}
