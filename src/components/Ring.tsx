@@ -1,15 +1,16 @@
+import { getProgressColor } from '../lib/progressTone'
+
 export function Ring({
   value,
   goal,
-  label,
-  color
+  label
 }: {
   value: number
   goal: number
   label: string
-  color: string
 }) {
   const percent = goal ? Math.round((value / goal) * 100) : 0
+  const color = getProgressColor(value, goal)
  
  return (
   <div style={{ textAlign: 'center', width: '100%' }}>
@@ -28,6 +29,7 @@ export function Ring({
           stroke="#e5e7eb"
           strokeWidth="10"
           fill="none"
+          className="progress-ring-track"
         />
 
         <circle
@@ -56,14 +58,14 @@ export function Ring({
         }}
       >
         <div style={{ fontSize: 20 }}>{percent}%</div>
-        <div style={{ fontSize: 12, color: '#6b7280' }}>
+        <div className="progress-ring-value" style={{ fontSize: 12 }}>
           {value.toFixed(0)} / {goal.toFixed(0)}
         </div>
       </div>
     </div>
 
     {/* LABEL BELOW */}
-    <div style={{ marginTop: 6, fontSize: 14, color: '#374151' }}>
+    <div className="progress-ring-label" style={{ marginTop: 6, fontSize: 14 }}>
       {label}
     </div>
   </div>

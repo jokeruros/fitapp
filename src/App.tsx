@@ -4,7 +4,7 @@ import { Foods } from './pages/Foods'
 import { Goals } from './pages/Goals'
 import { CalendarDashboard } from './pages/CalendarDashboard'
 import { Settings } from './pages/Settings'
-import { getPreferences, savePreferences, defaultPreferences, type UserPreferences } from './storage/preferences'
+import { getCachedTheme, getPreferences, savePreferences, defaultPreferences, setCachedTheme, type UserPreferences } from './storage/preferences'
 import { languages, translate } from './i18n'
 import { supabase } from './lib/supabase'
 
@@ -12,14 +12,19 @@ type Tab = 'dash' | 'foods' | 'goals' | 'calendar' | 'settings'
 
 export default function App({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>('dash')
-  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences)
+  const [preferences, setPreferences] = useState<UserPreferences>(() => ({ ...defaultPreferences, theme: getCachedTheme() }))
   const [accountOpen, setAccountOpen] = useState(false)
   const [email, setEmail] = useState('')
 
   useEffect(() => {
+    document.documentElement.dataset.theme = preferences.theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', preferences.theme === 'dark' ? '#101a2a' : '#142f59')
+  }, [preferences.theme])
+
+  useEffect(() => {
     let active = true
     void getPreferences().then(value => { if (active) setPreferences(value) }).catch(() => {})
-    void supabase?.auth.getUser().then(({ data }) => { if (active) setEmail(data.user?.email ?? '') })
+    void supabase?.auth.getSession().then(({ data }) => { if (active) setEmail(data.session?.user.email ?? '') })
     return () => { active = false }
   }, [])
 
@@ -69,7 +74,7 @@ export default function App({ onLogout }: { onLogout: () => void }) {
         {tab === 'calendar' && <CalendarDashboard t={t} language={preferences.appLanguage} />}
         {tab === 'foods' && <Foods t={t} foodLanguage={preferences.foodLanguage} />}
         {tab === 'goals' && <Goals t={t} />}
-        {tab === 'settings' && <Settings preferences={preferences} onChange={setPreferences} onSave={() => savePreferences(preferences)} />}
+        {tab === 'settings' && <Settings preferences={preferences} onChange={next => { setPreferences(next); setCachedTheme(next.theme) }} onSave={() => savePreferences(preferences)} />}
       </div>
     </div>
   )

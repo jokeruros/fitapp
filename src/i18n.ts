@@ -249,6 +249,25 @@ export function translate(language: LanguageCode, key: TranslationKey | string) 
   return (messages[language] as Messages | undefined)?.[key as TranslationKey] ?? en[key as TranslationKey] ?? key
 }
 
+const themeUiText: Record<LanguageCode, { question: string; light: string; dark: string }> = {
+  en: { question: 'App theme', light: 'Light', dark: 'Dark' },
+  zh: { question: '应用主题', light: '浅色', dark: '深色' },
+  hi: { question: 'ऐप थीम', light: 'हल्की', dark: 'गहरी' },
+  es: { question: 'Tema de la aplicación', light: 'Claro', dark: 'Oscuro' },
+  ar: { question: 'مظهر التطبيق', light: 'فاتح', dark: 'داكن' },
+  fr: { question: "Thème de l’application", light: 'Clair', dark: 'Sombre' },
+  bn: { question: 'অ্যাপের থিম', light: 'হালকা', dark: 'গাঢ়' },
+  pt: { question: 'Tema do aplicativo', light: 'Claro', dark: 'Escuro' },
+  ru: { question: 'Тема приложения', light: 'Светлая', dark: 'Тёмная' },
+  ur: { question: 'ایپ کی تھیم', light: 'ہلکی', dark: 'گہری' },
+  id: { question: 'Tema aplikasi', light: 'Terang', dark: 'Gelap' },
+  sr: { question: 'Tema aplikacije', light: 'Svetla', dark: 'Tamna' }
+}
+
+export function translateTheme(language: LanguageCode, key: 'question' | 'light' | 'dark') {
+  return themeUiText[language][key]
+}
+
 Object.assign(messages.sr ??= {}, serbianOverrides)
 
 const foodNames: Record<string, { source: string; names: Partial<Record<LanguageCode, string>> }> = {

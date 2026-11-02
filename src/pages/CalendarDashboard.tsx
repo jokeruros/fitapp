@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getDailyProgress, localDateKey, saveDailyProgress, type DailyProgress, type ProgressValues } from '../storage/dailyProgress'
+import { deleteDailyProgress, getDailyProgress, localDateKey, saveDailyProgress, type DailyProgress, type ProgressValues } from '../storage/dailyProgress'
+import { getProgressColor, getProgressTone } from '../lib/progressTone'
 
 const metrics = [
   { key: 'calories', label: 'Calories', unit: 'kcal', color: '#2563eb' },
@@ -64,9 +65,16 @@ export function CalendarDashboard({ t, language }: { t: (key: string) => string;
       goals: editValues.goals,
       achieved: editValues.achieved
     }
+    const hasAchievements = Object.values(record.achieved).some(value => Number(value) > 0)
     try {
-      await saveDailyProgress(record)
-      setRecords(current => [...current.filter(item => item.date !== selectedDate), record].sort((a, b) => a.date.localeCompare(b.date)))
+      if (hasAchievements) await saveDailyProgress(record)
+      else await deleteDailyProgress(selectedDate)
+      setRecords(current => {
+        const remaining = current.filter(item => item.date !== selectedDate)
+        return hasAchievements
+          ? [...remaining, record].sort((a, b) => a.date.localeCompare(b.date))
+          : remaining
+      })
       setEditing(false)
       setEditStatus(t('saved'))
     } catch {
@@ -106,22 +114,26 @@ export function CalendarDashboard({ t, language }: { t: (key: string) => string;
         <div className="calendar-grid">
           {dates.map(({ date, key, currentMonth }) => {
             const record = recordByDate.get(key)
-            const hit = record && record.goals.calories > 0
-              ? Math.min(100, Math.round(record.achieved.calories / record.goals.calories * 100))
-              : 0
+            const calorieGoal = record?.goals.calories ?? 0
+            const calorieAmount = record?.achieved.calories ?? 0
+            const hit = calorieGoal > 0 ? Math.min(100, Math.round(calorieAmount / calorieGoal * 100)) : 0
+            const tone = record ? getProgressTone(calorieAmount, calorieGoal) : 'unset'
             return (
               <button
                 key={key}
                 disabled={editing}
-                className={`calendar-day${currentMonth ? '' : ' outside-month'}${key === selectedDate ? ' selected' : ''}${record ? ' has-record' : ''}`}
+                className={`calendar-day${currentMonth ? '' : ' outside-month'}${key === selectedDate ? ' selected' : ''}${record ? ` has-record progress-${tone}` : ''}`}
                 onClick={() => setSelectedDate(key)}
                 aria-label={`${date.toLocaleDateString(dateLocale)}${record ? `, ${record.achieved.calories} of ${record.goals.calories} calories` : ', no saved progress'}`}
               >
                 <span className="calendar-day-number">{date.getDate()}</span>
                 {record ? <>
-                  <span className="calendar-cell-calories">{Math.round(record.achieved.calories)} / {Math.round(record.goals.calories)} kcal</span>
+                  <span className="calendar-cell-calories" style={{ color: getProgressColor(record.achieved.calories, record.goals.calories) }}>
+                    <span>{Math.round(record.achieved.calories).toLocaleString(dateLocale)}</span>
+                    <span className="calendar-cell-goal">/ {Math.round(record.goals.calories).toLocaleString(dateLocale)} kcal</span>
+                  </span>
                   <span className="calendar-cell-macros">P {Math.round(record.achieved.protein)}/{Math.round(record.goals.protein)} · C {Math.round(record.achieved.carbs)}/{Math.round(record.goals.carbs)} · F {Math.round(record.achieved.fats)}/{Math.round(record.goals.fats)}</span>
-                  <span className="calendar-progress-track"><span style={{ width: `${hit}%` }} /></span>
+                  <span className="calendar-progress-track"><span style={{ width: `${hit}%`, backgroundColor: getProgressColor(record.achieved.calories, record.goals.calories) }} /></span>
                 </> : <span className="calendar-empty">{t('noLog')}</span>}
               </button>
             )
@@ -157,11 +169,12 @@ export function CalendarDashboard({ t, language }: { t: (key: string) => string;
               const achieved = selected.achieved[metric.key]
               const goal = selected.goals[metric.key]
               const percent = goal ? Math.round(achieved / goal * 100) : 0
-              return <article className="metric-card" key={metric.key}>
-                <span className="metric-dot" style={{ background: metric.color }} />
+              const color = getProgressColor(achieved, goal)
+              return <article className={`metric-card progress-${getProgressTone(achieved, goal)}`} key={metric.key}>
+                <span className="metric-dot" style={{ background: color }} />
                 <h3>{t(metric.key)}</h3>
                 <p><strong>{Math.round(achieved).toLocaleString()}</strong> / {Math.round(goal).toLocaleString()} {metric.unit}</p>
-                <div className="metric-track"><span style={{ width: `${Math.min(100, percent)}%` }} /></div>
+                <div className="metric-track"><span style={{ width: `${Math.min(100, percent)}%`, backgroundColor: color }} /></div>
                 <small>{percent}% {t('ofGoal')}</small>
               </article>
             })}

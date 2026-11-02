@@ -20,8 +20,9 @@ export function getDailyProgress() {
 
 async function currentUserId() {
   const client = requireSupabase()
-  const { data: { user }, error } = await client.auth.getUser()
+  const { data: { session }, error } = await client.auth.getSession()
   if (error) throw error
+  const user = session?.user
   if (!user) throw new Error('Not logged in')
   return { client, userId: user.id }
 }
@@ -51,6 +52,15 @@ export async function saveDailyProgress(snapshot: DailyProgress) {
     goals: snapshot.goals,
     achieved: snapshot.achieved
   }, { onConflict: 'user_id,date' })
+  if (error) throw error
+}
+
+export async function deleteDailyProgress(date: string) {
+  const { client, userId } = await currentUserId()
+  const { error } = await client.from('daily_progress')
+    .delete()
+    .eq('user_id', userId)
+    .eq('date', date)
   if (error) throw error
 }
 

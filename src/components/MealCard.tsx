@@ -16,7 +16,7 @@ export function MealCard({
   t: (key: string) => string
   foodLanguage: LanguageCode
 }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState(meal.name)
   const [addingFood, setAddingFood] = useState(false)
@@ -122,7 +122,17 @@ export function MealCard({
     <div className="meal-card" style={{ marginTop: 12 }}>
       {/* HEADER */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
+        onKeyDown={event => {
+          if (event.target !== event.currentTarget) return
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            setOpen(value => !value)
+          }
+        }}
         style={{
           background: '#ffffff',
           border: '1px solid #e2e8f0',
@@ -140,12 +150,12 @@ export function MealCard({
                 onChange={e => setName(e.target.value)}
                 onBlur={saveName}
                 autoFocus
+                className="meal-name-input"
                 style={{
                   width: '100%',
                   background: 'transparent',
                   border: 'none',
                   borderBottom: '1px solid #3b82f6',
-                  color: 'white',
                   fontWeight: 600
                 }}
               />
@@ -242,9 +252,9 @@ function FoodRow({
   }
 
   return (
-    <div style={{ background: '#f9fafb', padding: 10, borderRadius: 8, marginBottom: 8 }}>
+    <div className="meal-food-row" style={{ padding: 10, borderRadius: 8, marginBottom: 8 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{translateFoodName(food, foodLanguage)}</strong>
+        <strong className={`meal-food-name${food.user ? ' user-food-name' : ''}`} style={{ flex: 1 }}>{translateFoodName(food, foodLanguage)}</strong>
         <input
           value={grams}
           inputMode="numeric"
@@ -257,7 +267,7 @@ function FoodRow({
         <button onClick={onRemove}>✕</button>
       </div>
 
-      <div style={{ fontSize: 12, marginTop: 4 }}>
+      <div className="meal-food-nutrition" style={{ fontSize: 12, marginTop: 4 }}>
         {formatFoodAmount(food.grams, foodLanguage)} {formatFoodUnit(food.unit, foodLanguage)} | {formatFoodNutrition(food, foodLanguage)}
       </div>
     </div>
@@ -278,9 +288,9 @@ function AddFoodRow({
   const [grams, setGrams] = useState(String(food.grams))
 
   return (
-    <div style={{ background: '#fff', padding: 6, borderRadius: 6, marginBottom: 6 }}>
-       <strong style={{ color: food.user ? 'green' : '#111827', flex: 1 }}>{translateFoodName(food, foodLanguage)}</strong>
-      <div style={{ fontSize: 12 }}>
+    <div className="meal-add-food-row" style={{ padding: 6, borderRadius: 6, marginBottom: 6 }}>
+       <strong className={`meal-food-name${food.user ? ' user-food-name' : ''}`} style={{ flex: 1 }}>{translateFoodName(food, foodLanguage)}</strong>
+      <div className="meal-food-nutrition" style={{ fontSize: 12 }}>
         {formatFoodAmount(food.grams, foodLanguage)} {formatFoodUnit(food.unit, foodLanguage)} | {formatFoodNutrition(food, foodLanguage)}
       </div>
 

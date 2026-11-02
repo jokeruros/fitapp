@@ -131,19 +131,19 @@ export function Foods({ t, foodLanguage }: { t: (key: string) => string; foodLan
         {visibleFoods.map(f => (
           <div
             key={f.id}
+            className={`food-list-card${f.user ? ' user-food-card' : ''}`}
             style={{
               marginBottom: 8,
               padding: 8,
               borderRadius: 8,
-              background: f.user ? '#ecfdf5' : '#f9fafb',
               border: '1px solid #e5e7eb'
             }}
           >
-            <strong style={{ color: f.user ? 'green' : '#111827' }}>
+            <strong className={`food-list-name${f.user ? ' user-food-name' : ''}`}>
               {translateFoodName(f, foodLanguage)}
             </strong>
 
-            <div style={{ fontSize: 12 }}>
+            <div className="food-nutrition-line" style={{ fontSize: 12 }}>
               {formatFoodAmount(f.grams, foodLanguage)} {formatFoodUnit(f.unit, foodLanguage)} | {formatFoodNutrition(f, foodLanguage)}
             </div>
 

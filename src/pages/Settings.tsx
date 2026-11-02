@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { languages, translate, translateReminder, type LanguageCode } from '../i18n'
+import { languages, translate, translateReminder, translateTheme, type LanguageCode } from '../i18n'
 import type { UserPreferences } from '../storage/preferences'
 import { defaultDailyReminder, getDailyReminderPreferences, removePushSubscription, saveDailyReminderPreferences, savePushSubscription, type DailyReminderPreferences } from '../storage/reminders'
 
@@ -9,6 +9,13 @@ function decodePublicKey(value: string) {
   const base64 = value.replace(/-/g, '+').replace(/_/g, '/')
   const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
   return Uint8Array.from(atob(padded), character => character.charCodeAt(0))
+}
+
+function sameBytes(left: ArrayBuffer | ArrayBufferView, right: Uint8Array) {
+  const bytes = left instanceof ArrayBuffer
+    ? new Uint8Array(left)
+    : new Uint8Array(left.buffer, left.byteOffset, left.byteLength)
+  return bytes.length === right.length && bytes.every((value, index) => value === right[index])
 }
 
 function isIosDevice() {
@@ -35,6 +42,46 @@ export function Settings({
   const [reminderLoading, setReminderLoading] = useState(true)
   const [reminderSaving, setReminderSaving] = useState(false)
   const [reminderStatus, setReminderStatus] = useState('')
+  const [deviceStatus, setDeviceStatus] = useState('')
+  const [testStatus, setTestStatus] = useState('')
+
+  async function refreshDeviceStatus() {
+    if (!window.isSecureContext || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setDeviceStatus('Push notifications are unavailable in this browser or context.')
+      return
+    }
+    const permission = Notification.permission
+    const registration = await navigator.serviceWorker.getRegistration()
+    const subscription = await registration?.pushManager.getSubscription()
+    setDeviceStatus(`Device permission: ${permission}. Push subscription: ${subscription ? 'active' : 'not registered'}.`)
+  }
+
+  async function testDeviceNotification() {
+    setTestStatus('')
+    try {
+      if (!window.isSecureContext || !('serviceWorker' in navigator) || !('Notification' in window)) {
+        setTestStatus('Notifications require HTTPS and a supported browser.')
+        return
+      }
+      let permission = Notification.permission
+      if (permission !== 'granted') permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        setTestStatus('Notification permission is not granted on this device.')
+        return
+      }
+      const registration = await navigator.serviceWorker.ready
+      await registration.showNotification('NutriTrack test', {
+        body: 'This device can display notifications. This test does not check the scheduled Supabase push.',
+        icon: '/nutritrack-icon.svg',
+        tag: 'nutritrack-device-test'
+      })
+      setTestStatus('Test notification displayed. Scheduled reminders still depend on the Supabase push service.')
+      await refreshDeviceStatus()
+    } catch (error) {
+      console.error('Unable to display a test notification', error)
+      setTestStatus('Could not display a notification. Check this device’s notification settings.')
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -47,6 +94,10 @@ export function Settings({
     })
     return () => { active = false }
   }, [preferences.appLanguage])
+
+  useEffect(() => {
+    void refreshDeviceStatus().catch(() => setDeviceStatus('Could not read this device’s push subscription.'))
+  }, [])
 
   async function save() {
     setSaving(true)
@@ -90,11 +141,18 @@ export function Settings({
         const registration = await navigator.serviceWorker.register('/sw.js')
         const readyRegistration = await navigator.serviceWorker.ready
         const pushManager = readyRegistration.pushManager ?? registration.pushManager
+        const expectedApplicationServerKey = decodePublicKey(publicPushKey)
         let subscription = await pushManager.getSubscription()
+        const currentApplicationServerKey = subscription?.options.applicationServerKey
+        if (subscription && (!currentApplicationServerKey || !sameBytes(currentApplicationServerKey, expectedApplicationServerKey))) {
+          await removePushSubscription(subscription)
+          await subscription.unsubscribe()
+          subscription = null
+        }
         if (!subscription) {
           subscription = await pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: decodePublicKey(publicPushKey)
+            applicationServerKey: expectedApplicationServerKey
           })
         }
         await savePushSubscription(subscription)
@@ -111,6 +169,7 @@ export function Settings({
       }
       setReminder(next)
       setReminderStatus(translateReminder(preferences.appLanguage, 'saved'))
+      await refreshDeviceStatus()
     } catch (error) {
       console.error('Unable to save daily reminder', error)
       setReminderStatus(translateReminder(preferences.appLanguage, 'error'))
@@ -146,6 +205,17 @@ export function Settings({
           </select>
         </label>
 
+        <label className="settings-field">
+          <span>{translateTheme(preferences.appLanguage, 'question')}</span>
+          <select
+            value={preferences.theme}
+            onChange={event => onChange({ ...preferences, theme: event.target.value as 'light' | 'dark' })}
+          >
+            <option value="light">{translateTheme(preferences.appLanguage, 'light')}</option>
+            <option value="dark">{translateTheme(preferences.appLanguage, 'dark')}</option>
+          </select>
+        </label>
+
         <p className="settings-hint">{t('foodLanguageNote')}</p>
         <button className="save-progress-button" disabled={saving} onClick={() => void save()}>
           {saving ? t('saving') : t('saveSettings')}
@@ -174,6 +244,9 @@ export function Settings({
           {reminderSaving ? translateReminder(preferences.appLanguage, 'saving') : translateReminder(preferences.appLanguage, 'save')}
         </button>
         {reminderStatus && <p className="settings-status" role="status" aria-live="polite">{reminderStatus}</p>}
+        {deviceStatus && <p className="settings-status" role="status">{deviceStatus}</p>}
+        <button className="calendar-edit-button" onClick={() => void testDeviceNotification()}>Test notification on this device</button>
+        {testStatus && <p className="settings-status" role="status" aria-live="polite">{testStatus}</p>}
       </section>
     </main>
   )

@@ -15,8 +15,9 @@ export const defaultDailyReminder: DailyReminderPreferences = {
 
 async function currentUser() {
   const client = requireSupabase()
-  const { data: { user }, error } = await client.auth.getUser()
+  const { data: { session }, error } = await client.auth.getSession()
   if (error) throw error
+  const user = session?.user
   if (!user) throw new Error('Not logged in')
   return { client, user }
 }

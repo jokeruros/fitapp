@@ -77,7 +77,7 @@ export function Goals({ t }: { t: (key: string) => string }) {
   if (!loaded) return null
 
   return (
-    <div style={{ padding: 12 }}>
+    <div className="goals-page" style={{ padding: 12 }}>
       <h3>{t('dailyGoals')}</h3>
 
       <GoalInput
@@ -134,6 +134,7 @@ function GoalInput({
       <label style={{ fontSize: 12 }}>{label}</label>
 
       <input
+        className="goal-input"
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"

@@ -99,10 +99,10 @@ export function Dashboard({ t, foodLanguage, language }: { t: (key: string) => s
 
     <section className="progress-overview" aria-label={t('progressAria')}>
       <div className="progress-grid">
-        <div className="progress-ring-card"><Ring label={t('calories')} value={totals.calories} goal={calorieGoal} color="#22c55e" /></div>
-        <div className="progress-ring-card"><Ring label={t('protein')} value={totals.protein} goal={goals.protein} color="#16a34a" /></div>
-        <div className="progress-ring-card"><Ring label={t('carbs')} value={totals.carbs} goal={goals.carbs} color="#2563eb" /></div>
-        <div className="progress-ring-card"><Ring label={t('fats')} value={totals.fats} goal={goals.fats} color="#f59e0b" /></div>
+        <div className="progress-ring-card"><Ring label={t('calories')} value={totals.calories} goal={calorieGoal} /></div>
+        <div className="progress-ring-card"><Ring label={t('protein')} value={totals.protein} goal={goals.protein} /></div>
+        <div className="progress-ring-card"><Ring label={t('carbs')} value={totals.carbs} goal={goals.carbs} /></div>
+        <div className="progress-ring-card"><Ring label={t('fats')} value={totals.fats} goal={goals.fats} /></div>
       </div>
     </section>
 
