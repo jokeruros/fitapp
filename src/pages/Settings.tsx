@@ -43,7 +43,6 @@ export function Settings({
   const [reminderSaving, setReminderSaving] = useState(false)
   const [reminderStatus, setReminderStatus] = useState('')
   const [deviceStatus, setDeviceStatus] = useState('')
-  const [testStatus, setTestStatus] = useState('')
 
   async function refreshDeviceStatus() {
     if (!window.isSecureContext || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
@@ -56,32 +55,6 @@ export function Settings({
     setDeviceStatus(`Device permission: ${permission}. Push subscription: ${subscription ? 'active' : 'not registered'}.`)
   }
 
-  async function testDeviceNotification() {
-    setTestStatus('')
-    try {
-      if (!window.isSecureContext || !('serviceWorker' in navigator) || !('Notification' in window)) {
-        setTestStatus('Notifications require HTTPS and a supported browser.')
-        return
-      }
-      let permission = Notification.permission
-      if (permission !== 'granted') permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        setTestStatus('Notification permission is not granted on this device.')
-        return
-      }
-      const registration = await navigator.serviceWorker.ready
-      await registration.showNotification('NutriTrack test', {
-        body: 'This device can display notifications. This test does not check the scheduled Supabase push.',
-        icon: '/nutritrack-icon.svg',
-        tag: 'nutritrack-device-test'
-      })
-      setTestStatus('Test notification displayed. Scheduled reminders still depend on the Supabase push service.')
-      await refreshDeviceStatus()
-    } catch (error) {
-      console.error('Unable to display a test notification', error)
-      setTestStatus('Could not display a notification. Check this device’s notification settings.')
-    }
-  }
 
   useEffect(() => {
     let active = true
@@ -245,8 +218,6 @@ export function Settings({
         </button>
         {reminderStatus && <p className="settings-status" role="status" aria-live="polite">{reminderStatus}</p>}
         {deviceStatus && <p className="settings-status" role="status">{deviceStatus}</p>}
-        <button className="calendar-edit-button" onClick={() => void testDeviceNotification()}>Test notification on this device</button>
-        {testStatus && <p className="settings-status" role="status" aria-live="polite">{testStatus}</p>}
       </section>
     </main>
   )

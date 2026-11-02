@@ -54,13 +54,14 @@ Deno.serve(async request => {
   if (subscriptionsError) return new Response(subscriptionsError.message, { status: 500 })
 
   let sentCount = 0
-  for (const candidate of due as Array<{ user_id: string; local_date: string; language: string }>) {
+  for (const candidate of due as Array<{ user_id: string; local_date: string; reminder_time: string; language: string }>) {
     const targets = (subscriptions ?? []).filter(subscription => subscription.user_id === candidate.user_id)
     if (!targets.length) continue
 
     const { error: claimError } = await admin.from('daily_reminder_sends').insert({
       user_id: candidate.user_id,
-      local_date: candidate.local_date
+      local_date: candidate.local_date,
+      reminder_time: candidate.reminder_time
     })
     if (claimError?.code === '23505') continue
     if (claimError) return new Response(claimError.message, { status: 500 })
@@ -82,11 +83,11 @@ Deno.serve(async request => {
 
     if (sent) {
       await admin.from('daily_reminder_sends').update({ sent_at: new Date().toISOString() })
-        .eq('user_id', candidate.user_id).eq('local_date', candidate.local_date)
+        .eq('user_id', candidate.user_id).eq('local_date', candidate.local_date).eq('reminder_time', candidate.reminder_time)
       sentCount++
     } else {
       await admin.from('daily_reminder_sends').delete()
-        .eq('user_id', candidate.user_id).eq('local_date', candidate.local_date)
+        .eq('user_id', candidate.user_id).eq('local_date', candidate.local_date).eq('reminder_time', candidate.reminder_time)
     }
   }
 
